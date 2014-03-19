@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">MapsMeasure</string>
+    <string name="app_name">Maps Measure</string>
+    <string name="section_measure">Measure</string>
+    <string name="section_mapview">Map view</string>
+    <string name="measure_distance">Distance</string>
+    <string name="measure_area">Area</string>
+    <string name="mapview_map">Map</string>
+    <string name="mapview_satellite">Satellite</string>
+    <string name="metric">Metric units</string>
+    <string name="about">About</string>
+    <string name="about_text">This app was created by Thomas Hoffmann (<a href="http://www.j4velin-development.de">www.j4velin-development.de</a>) and uses the \'Google Maps API v2\'.\n\nMaps Measure is open source! Get the code from <a href="https://github.com/j4velin/MapsMeasure">GitHub</a>.\n\n</string>
+    <string name="app_version">App version: %s</string>
+    <string name="moreapps">More apps</string>
 
 </resources>

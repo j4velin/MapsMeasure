@@ -17,10 +17,12 @@
 package de.j4velin.mapsmeasure;
 
 import android.content.Context;
+import android.util.TypedValue;
 
 public class Util {
 
-	// from http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
+	// from
+	// http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
 	public static int getStatusBarHeight(final Context c) {
 		int result = 0;
 		int resourceId = c.getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -30,14 +32,8 @@ public class Util {
 		return result;
 	}
 
-	// from http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
-	public static int getNavigationBarHeight(final Context c) {
-		int result = 0;
-		int resourceId = c.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
-		if (resourceId > 0) {
-			result = c.getResources().getDimensionPixelSize(resourceId);
-		}
-		return result;
+	public static int dpToPx(final Context c, int dp) {
+		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, c.getResources().getDisplayMetrics());
 	}
 
 }
