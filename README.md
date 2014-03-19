@@ -7,6 +7,7 @@ A simple app to measure distances on Google Maps.
 <tr>
 <td><img width="200px" src="screenshot1.png" /></td>
 <td><img width="200px" src="screenshot2.png" /></td>
+<td><img width="200px" src="screenshot3.png" /></td>
 </tr>
 </table>
 
