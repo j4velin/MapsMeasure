@@ -7,7 +7,8 @@
         android:right="5dp"
         android:top="5dp">
         <shape android:shape="rectangle" >
-            <padding
+            <solid android:color="#00ffffff" />
+            <padding
                 android:bottom="7dp"
                 android:left="10dp"
                 android:right="10dp"

@@ -63,9 +63,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -377,12 +374,16 @@ public class Map extends FragmentActivity {
 				return true;
 			}
 		});
-		CheckBox metricCb = (CheckBox) findViewById(R.id.metric);
-		metricCb.setChecked(metric);
-		metricCb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+		
+		final View metricTV = findViewById(R.id.metric);
+		metricTV.setBackgroundResource(
+				metric ? R.drawable.background_selected : R.drawable.background_normal);
+		metricTV.setOnClickListener(new OnClickListener() {
 			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				metric = isChecked;
+			public void onClick(final View v) {
+				metric = !metric;
+				metricTV.setBackgroundResource(
+						metric ? R.drawable.background_selected : R.drawable.background_normal);
 				updateValueText();
 				prefs.edit().putBoolean("metric", metric).commit();
 				if (mDrawerLayout != null)
