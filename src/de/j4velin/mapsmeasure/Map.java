@@ -61,6 +61,7 @@ import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -243,10 +244,39 @@ public class Map extends FragmentActivity {
 			}
 		});
 
-		findViewById(R.id.delete).setOnClickListener(new OnClickListener() {
+		
+		View delete = findViewById(R.id.delete);
+		delete.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
 				removeLast();
+			}
+		});
+		delete.setOnLongClickListener(new OnLongClickListener() {
+			@Override
+			public boolean onLongClick(final View v) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(Map.this);
+				builder.setMessage(getString(R.string.delete_all, trace.size()));
+				builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						mMap.clear();
+						trace.clear();
+						lines.clear();
+						points.clear();
+						distance = 0;
+						updateValueText();
+						dialog.dismiss();
+					}
+				});
+				builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+				builder.create().show();
+				return true;				
 			}
 		});
 
