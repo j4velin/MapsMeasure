@@ -223,7 +223,7 @@ public class Map extends FragmentActivity {
 			savedInstanceState.putSerializable("trace", t);
 		}
 		setContentView(R.layout.activity_map);
-		
+
 		formatter_no_dec.setMaximumFractionDigits(0);
 		formatter_two_dec.setMaximumFractionDigits(2);
 
@@ -350,7 +350,7 @@ public class Map extends FragmentActivity {
 			// on most devices and in most orientations, the navigation bar
 			// should be at the bottom and therefore reduces the available
 			// display height
-			int navBarHeight = total.heightPixels - available.heightPixels - Util.getStatusBarHeight(this);
+			int navBarHeight = Math.max(0, total.heightPixels - available.heightPixels - Util.getStatusBarHeight(this));
 
 			if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
 				// in landscape on phones, the navigation bar might be at the
@@ -363,6 +363,18 @@ public class Map extends FragmentActivity {
 				mMap.setPadding(0, statusbar, 0, navBarHeight);
 				findViewById(R.id.left_drawer).setPadding(0, statusbar + 10, 0, navBarHeight);
 			}
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(Map.this);
+			builder.setMessage("Total space: " + total.widthPixels + " x " + total.heightPixels + " px\nAvailable space: "
+					+ available.widthPixels + " x " + available.heightPixels + " px\n" + "StatusbarHeight: "
+					+ Util.getStatusBarHeight(this) + "\nNavigationbarHeight: " + navBarHeight);
+			builder.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			builder.create().show();
 
 		}
 
