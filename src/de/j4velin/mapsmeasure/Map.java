@@ -97,7 +97,8 @@ public class Map extends FragmentActivity {
 
 	private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT = Color.argb(128, 255, 0, 0);
 
-	private final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
+	private final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
+	private final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
 
 	public boolean metric; // display in metric units
 
@@ -114,14 +115,14 @@ public class Map extends FragmentActivity {
 		if (!showArea) {
 			if (metric) {
 				if (distance > 1000)
-					return formatter.format(distance / 1000) + " km";
+					return formatter_two_dec.format(distance / 1000) + " km";
 				else
-					return formatter.format(Math.max(0, distance)) + " m";
+					return formatter_two_dec.format(Math.max(0, distance)) + " m";
 			} else {
 				if (distance > 1609)
-					return formatter.format(distance / 1609.344f) + " mi";
+					return formatter_two_dec.format(distance / 1609.344f) + " mi";
 				else
-					return formatter.format(Math.max(0, distance / 0.9144f)) + " yd";
+					return formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
 			}
 		} else {
 			double area;
@@ -134,9 +135,15 @@ public class Map extends FragmentActivity {
 				area = 0;
 			}
 			if (metric) {
-				return formatter.format(Math.max(0, area)) + " m²";
+				if (area > 1000000)
+					return formatter_two_dec.format(Math.max(0, area / 1000000d)) + " km²";
+				else
+					return formatter_no_dec.format(Math.max(0, area)) + " m²";
 			} else {
-				return formatter.format(Math.max(0, area / 4046.8564f)) + " ac";
+				if (area >= 2589989)
+					return formatter_two_dec.format(Math.max(0, area / 2589988.110336d)) + " mi²";
+				else
+					return formatter_no_dec.format(Math.max(0, area / 0.09290304d)) + " ft²";
 			}
 		}
 	}
@@ -216,10 +223,14 @@ public class Map extends FragmentActivity {
 			savedInstanceState.putSerializable("trace", t);
 		}
 		setContentView(R.layout.activity_map);
+		
+		formatter_no_dec.setMaximumFractionDigits(0);
+		formatter_two_dec.setMaximumFractionDigits(2);
 
 		final SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
 
-		metric = prefs.getBoolean("metric", true);
+		// use metric a the default everywhere, except in the US
+		metric = prefs.getBoolean("metric", !Locale.getDefault().equals(Locale.US));
 
 		final View topCenterOverlay = findViewById(R.id.topCenterOverlay);
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -511,7 +522,6 @@ public class Map extends FragmentActivity {
 				measureArea ? R.drawable.background_selected : R.drawable.background_normal);
 		findViewById(R.id.measure_distance).setBackgroundResource(
 				measureArea ? R.drawable.background_normal : R.drawable.background_selected);
-		formatter.setMaximumFractionDigits(showArea ? 0 : 2);
 		updateValueText();
 		if (mDrawerLayout != null)
 			mDrawerLayout.closeDrawers();
