@@ -14,5 +14,6 @@
     <string name="app_version">App-Version: %s</string>
     <string name="moreapps">Weitere Apps</string>
     <string name="delete_all">Alle %d Punkte löschen?</string>
+    <string name="no_location_found">Ort nicht gefunden</string>
 
 </resources>
