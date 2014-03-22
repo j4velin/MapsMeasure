@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -35,7 +34,6 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.SphericalUtil;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -568,7 +566,6 @@ public class Map extends FragmentActivity {
 				List<Address> addresses = geocoder.getFromLocationName(locationName[0], 1);
 				return addresses != null && !addresses.isEmpty() ? addresses.get(0) : null;
 			} catch (IOException e) {
-				Toast.makeText(Map.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
 				e.printStackTrace();
 				return null;
 			}
@@ -577,7 +574,7 @@ public class Map extends FragmentActivity {
 		@Override
 		protected void onPostExecute(final Address address) {
 			if (address == null) {
-				Toast.makeText(getBaseContext(), "No Location found", Toast.LENGTH_SHORT).show();
+				Toast.makeText(getBaseContext(), R.string.no_location_found, Toast.LENGTH_SHORT).show();
 			} else {
 				mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(address.getLatitude(), address.getLongitude()),
 						Math.max(10, mMap.getCameraPosition().zoom)));
