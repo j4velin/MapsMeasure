@@ -17,6 +17,7 @@
 package de.j4velin.mapsmeasure;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -28,7 +29,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
@@ -55,7 +55,6 @@ import android.os.AsyncTask;
 import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -148,14 +147,17 @@ public class Map extends FragmentActivity {
 		while (it.hasNext()) {
 			addPoint(it.next());
 		}
-		mMap.moveCamera(CameraUpdateFactory.newCameraPosition((CameraPosition) savedInstanceState.getParcelable("position")));
+		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(savedInstanceState.getDouble("position-lat"),
+				savedInstanceState.getDouble("position-lon")), savedInstanceState.getFloat("position-zoom")));
 	}
 
 	@Override
 	protected void onSaveInstanceState(final Bundle outState) {
 		outState.putSerializable("trace", trace);
 		outState.putBoolean("metric", metric);
-		outState.putParcelable("position", mMap.getCameraPosition());
+		outState.putDouble("position-lon", mMap.getCameraPosition().target.longitude);
+		outState.putDouble("position-lat", mMap.getCameraPosition().target.latitude);
+		outState.putFloat("position-zoom", mMap.getCameraPosition().zoom);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -197,10 +199,10 @@ public class Map extends FragmentActivity {
 		try {
 			super.onCreate(savedInstanceState);
 		} catch (final BadParcelableException bpe) {
-			Parcelable camera = savedInstanceState.getParcelable("position");
-			savedInstanceState.remove("position");
+			Serializable t = savedInstanceState.getSerializable("trace");
+			savedInstanceState.remove("trace");
 			super.onCreate(savedInstanceState);
-			savedInstanceState.putParcelable("position", camera);
+			savedInstanceState.putSerializable("trace", t);
 		}
 		setContentView(R.layout.activity_map);
 
