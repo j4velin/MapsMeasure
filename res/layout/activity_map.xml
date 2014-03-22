@@ -79,15 +79,16 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/section_measure"
                 android:textColor="#666" />
-            
+
             <TextView
                 android:id="@+id/metric"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/background_normal"
                 android:drawableLeft="@drawable/ic_metric"
                 android:drawablePadding="5dp"
                 android:gravity="center_vertical"
-                android:text="@string/metric"
+                android:text="@string/units"
                 android:textAppearance="?android:textAppearanceMedium"
                 android:textColor="#000" />
 

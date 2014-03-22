@@ -15,5 +15,6 @@
     <string name="moreapps">More apps</string>
     <string name="delete_all">Delete all %d points?</string>
     <string name="no_location_found">No location found</string>
+    <string name="units">Units</string>
 
 </resources>
