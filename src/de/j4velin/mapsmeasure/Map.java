@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -34,6 +35,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.SphericalUtil;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -50,8 +52,10 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -190,7 +194,14 @@ public class Map extends FragmentActivity {
 	@SuppressLint("NewApi")
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+		try {
+			super.onCreate(savedInstanceState);
+		} catch (final BadParcelableException bpe) {
+			Parcelable camera = savedInstanceState.getParcelable("position");
+			savedInstanceState.remove("position");
+			super.onCreate(savedInstanceState);
+			savedInstanceState.putParcelable("position", camera);
+		}
 		setContentView(R.layout.activity_map);
 
 		final SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
@@ -241,7 +252,6 @@ public class Map extends FragmentActivity {
 			}
 		});
 
-		
 		View delete = findViewById(R.id.delete);
 		delete.setOnClickListener(new OnClickListener() {
 			@Override
@@ -273,7 +283,7 @@ public class Map extends FragmentActivity {
 					}
 				});
 				builder.create().show();
-				return true;				
+				return true;
 			}
 		});
 
@@ -309,7 +319,7 @@ public class Map extends FragmentActivity {
 				// in landscape on phones, the navigation bar might be at the
 				// right side, reducing the available display width
 				int navBarWidth = total.widthPixels - available.widthPixels;
-				
+
 				mMap.setPadding(mDrawerLayout == null ? Util.dpToPx(this, 200) : 0, statusbar, navBarWidth, navBarHeight);
 				findViewById(R.id.left_drawer).setPadding(0, statusbar + 10, 0, navBarHeight);
 			} else {
@@ -365,25 +375,26 @@ public class Map extends FragmentActivity {
 		((EditText) findViewById(R.id.search)).setOnEditorActionListener(new OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
-				new GeocoderTask().execute(v.getText().toString());
-				InputMethodManager inputManager = (InputMethodManager) Map.this.getSystemService(Context.INPUT_METHOD_SERVICE);
-				inputManager.hideSoftInputFromWindow(Map.this.getCurrentFocus().getWindowToken(),
-						InputMethodManager.HIDE_NOT_ALWAYS);
-				if (mDrawerLayout != null)
-					mDrawerLayout.closeDrawers();
+				if (event.getAction() == KeyEvent.ACTION_DOWN) {
+					new GeocoderTask().execute(v.getText().toString());
+					InputMethodManager inputManager = (InputMethodManager) Map.this
+							.getSystemService(Context.INPUT_METHOD_SERVICE);
+					inputManager.hideSoftInputFromWindow(Map.this.getCurrentFocus().getWindowToken(),
+							InputMethodManager.HIDE_NOT_ALWAYS);
+					if (mDrawerLayout != null)
+						mDrawerLayout.closeDrawers();
+				}
 				return true;
 			}
 		});
-		
+
 		final View metricTV = findViewById(R.id.metric);
-		metricTV.setBackgroundResource(
-				metric ? R.drawable.background_selected : R.drawable.background_normal);
+		metricTV.setBackgroundResource(metric ? R.drawable.background_selected : R.drawable.background_normal);
 		metricTV.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
 				metric = !metric;
-				metricTV.setBackgroundResource(
-						metric ? R.drawable.background_selected : R.drawable.background_normal);
+				metricTV.setBackgroundResource(metric ? R.drawable.background_selected : R.drawable.background_normal);
 				updateValueText();
 				prefs.edit().putBoolean("metric", metric).commit();
 				if (mDrawerLayout != null)
@@ -566,7 +577,8 @@ public class Map extends FragmentActivity {
 			if (address == null) {
 				Toast.makeText(getBaseContext(), "No Location found", Toast.LENGTH_SHORT).show();
 			} else {
-				mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(address.getLatitude(), address.getLongitude())));
+				mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(address.getLatitude(), address.getLongitude()),
+						Math.max(10, mMap.getCameraPosition().zoom)));
 			}
 		}
 	}
