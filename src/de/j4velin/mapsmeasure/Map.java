@@ -401,7 +401,7 @@ public class Map extends FragmentActivity {
 		((EditText) findViewById(R.id.search)).setOnEditorActionListener(new OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
-				if (event.getAction() == KeyEvent.ACTION_DOWN) {
+				if (event == null || event.getAction() == KeyEvent.ACTION_DOWN) {
 					new GeocoderTask().execute(v.getText().toString());
 					InputMethodManager inputManager = (InputMethodManager) Map.this
 							.getSystemService(Context.INPUT_METHOD_SERVICE);
