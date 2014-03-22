@@ -19,6 +19,7 @@ package de.j4velin.mapsmeasure;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.NumberFormat;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -143,15 +144,22 @@ public class Map extends FragmentActivity {
 	@Override
 	protected void onRestoreInstanceState(final Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
-		metric = savedInstanceState.getBoolean("metric");
-		@SuppressWarnings("unchecked")
-		Stack<LatLng> tmp = (Stack<LatLng>) savedInstanceState.getSerializable("trace");
-		Iterator<LatLng> it = tmp.iterator();
-		while (it.hasNext()) {
-			addPoint(it.next());
+		try {
+			metric = savedInstanceState.getBoolean("metric");
+			@SuppressWarnings("unchecked")
+			// Casting to Stack<LatLng> apparently results in
+			// "java.lang.ClassCastException: java.util.ArrayList cannot be cast to java.util.Stack"
+			// on some devices
+			AbstractCollection<LatLng> tmp = (AbstractCollection<LatLng>) savedInstanceState.getSerializable("trace");
+			Iterator<LatLng> it = tmp.iterator();
+			while (it.hasNext()) {
+				addPoint(it.next());
+			}
+			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(savedInstanceState.getDouble("position-lat"),
+					savedInstanceState.getDouble("position-lon")), savedInstanceState.getFloat("position-zoom")));
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(savedInstanceState.getDouble("position-lat"),
-				savedInstanceState.getDouble("position-lon")), savedInstanceState.getFloat("position-zoom")));
 	}
 
 	@Override
