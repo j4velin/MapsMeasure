@@ -177,9 +177,11 @@ public class Map extends FragmentActivity {
 	protected void onSaveInstanceState(final Bundle outState) {
 		outState.putSerializable("trace", trace);
 		outState.putBoolean("metric", metric);
-		outState.putDouble("position-lon", mMap.getCameraPosition().target.longitude);
-		outState.putDouble("position-lat", mMap.getCameraPosition().target.latitude);
-		outState.putFloat("position-zoom", mMap.getCameraPosition().zoom);
+		if (mMap != null) { // might be null if there is an issue with Google Play Services
+			outState.putDouble("position-lon", mMap.getCameraPosition().target.longitude);
+			outState.putDouble("position-lat", mMap.getCameraPosition().target.latitude);
+			outState.putFloat("position-zoom", mMap.getCameraPosition().zoom);
+		}
 		super.onSaveInstanceState(outState);
 	}
 
