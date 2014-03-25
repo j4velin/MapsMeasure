@@ -26,7 +26,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 
+import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -53,7 +55,6 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.BadParcelableException;
@@ -105,6 +106,8 @@ public class Map extends FragmentActivity {
 	private final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
 
 	public boolean metric; // display in metric units
+
+	private LocationClient locationClient;
 
 	/**
 	 * Get the formatted string for the valueTextView.
@@ -177,7 +180,8 @@ public class Map extends FragmentActivity {
 	protected void onSaveInstanceState(final Bundle outState) {
 		outState.putSerializable("trace", trace);
 		outState.putBoolean("metric", metric);
-		if (mMap != null) { // might be null if there is an issue with Google Play Services
+		if (mMap != null) { // might be null if there is an issue with Google
+							// Play Services
 			outState.putDouble("position-lon", mMap.getCameraPosition().target.longitude);
 			outState.putDouble("position-lat", mMap.getCameraPosition().target.latitude);
 			outState.putFloat("position-zoom", mMap.getCameraPosition().zoom);
@@ -285,6 +289,23 @@ public class Map extends FragmentActivity {
 			return;
 		}
 
+		locationClient = new LocationClient(this, new ConnectionCallbacks() {
+			@Override
+			public void onDisconnected() {
+
+			}
+
+			@Override
+			public void onConnected(final Bundle b) {
+				Location l = locationClient.getLastLocation();
+				if (l != null) {
+					mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()), 16));
+				}
+				locationClient.disconnect();
+			}
+		}, null);
+		locationClient.connect();
+
 		valueTv = (TextView) findViewById(R.id.distance);
 		updateValueText();
 		valueTv.setOnClickListener(new OnClickListener() {
@@ -372,46 +393,6 @@ public class Map extends FragmentActivity {
 		}
 
 		mMap.setMyLocationEnabled(true);
-
-		LatLng userLocation = null; // location to move to
-
-		if (getIntent().getDoubleExtra("lon", 1000) < 999) {
-			double lon = getIntent().getDoubleExtra("lon", 0);
-			double lat = getIntent().getDoubleExtra("lat", 0);
-			userLocation = new LatLng(lat, lon);
-		} else {
-			Location location = mMap.getMyLocation();
-			if (location == null) {
-				LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-				List<String> matchingProviders = locationManager.getAllProviders();
-				float accuracy, bestAccuracy = Float.MAX_VALUE;
-				long time, minTime = 0;
-				Location tmp;
-				for (String provider : matchingProviders) {
-					tmp = locationManager.getLastKnownLocation(provider);
-					if (tmp != null) {
-						accuracy = tmp.getAccuracy();
-						time = tmp.getTime();
-
-						if ((time > minTime && accuracy < bestAccuracy)) {
-							location = tmp;
-							bestAccuracy = accuracy;
-							minTime = time;
-						} else if (time < minTime && bestAccuracy == Float.MAX_VALUE && time > minTime) {
-							location = tmp;
-							minTime = time;
-						}
-					}
-				}
-			}
-			if (location != null) {
-				userLocation = new LatLng(location.getLatitude(), location.getLongitude());
-			}
-		}
-
-		if (userLocation != null) {
-			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 16));
-		}
 
 		// Drawer stuff
 		((EditText) findViewById(R.id.search)).setOnEditorActionListener(new OnEditorActionListener() {
