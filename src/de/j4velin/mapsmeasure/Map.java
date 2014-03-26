@@ -67,6 +67,7 @@ import android.support.v4.widget.DrawerLayout.DrawerListener;
 import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
+import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -637,4 +638,14 @@ public class Map extends FragmentActivity {
 	private void updateValueText() {
 		valueTv.setText(getFormattedString());
 	}
+	
+	@Override
+	public boolean onPrepareOptionsMenu(final Menu menu) {
+		if (mDrawerLayout.isDrawerOpen(GravityCompat.START))
+			mDrawerLayout.closeDrawers();
+		else
+			mDrawerLayout.openDrawer(GravityCompat.START);
+		return false;
+	}
+	
 }
