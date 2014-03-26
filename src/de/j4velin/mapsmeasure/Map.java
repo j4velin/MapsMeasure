@@ -333,8 +333,7 @@ public class Map extends FragmentActivity {
 		valueTv.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				if (mDrawerLayout != null)
-					mDrawerLayout.openDrawer(GravityCompat.START);
+				toggleArea(!showArea);
 			}
 		});
 
