@@ -21,8 +21,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_margin="10dp"
-            android:background="#99000000" >
+            android:layout_marginTop="10dp"
+            android:background="@drawable/value_background" >
 
             <TextView
                 android:id="@+id/distance"
@@ -31,7 +31,7 @@
                 android:layout_marginRight="10dp"
                 android:padding="10dp"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#fff" />
+                android:textColor="#666" />
 
             <ImageView
                 android:id="@+id/delete"
@@ -42,6 +42,14 @@
                 android:paddingRight="10dp"
                 android:src="@drawable/ic_action_delete" />
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|left"
+            android:layout_marginBottom="10dp"
+            android:src="@drawable/ic_menu" />
     </FrameLayout>
     <!-- The navigation drawer -->
 

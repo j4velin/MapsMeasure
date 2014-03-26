@@ -245,10 +245,23 @@ public class Map extends FragmentActivity {
 
 		final View topCenterOverlay = findViewById(R.id.topCenterOverlay);
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+		final View menuButton = findViewById(R.id.menu);
+		if (menuButton != null) {
+			menuButton.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(final View v) {
+					mDrawerLayout.openDrawer(GravityCompat.START);
+				}
+			});
+		}
+
 		if (mDrawerLayout != null) {
 			mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
 			mDrawerLayout.setDrawerListener(new DrawerListener() {
+				
+				private boolean menuButtonVisible = true;
 
 				@Override
 				public void onDrawerStateChanged(int newState) {
@@ -260,18 +273,26 @@ public class Map extends FragmentActivity {
 				public void onDrawerSlide(final View drawerView, final float slideOffset) {
 					if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB)
 						topCenterOverlay.setAlpha(1 - slideOffset);
+					if (menuButtonVisible && menuButton != null && slideOffset > 0) {
+						menuButton.setVisibility(View.INVISIBLE);
+						menuButtonVisible = false;
+					}
 				}
 
 				@Override
-				public void onDrawerOpened(View drawerView) {
+				public void onDrawerOpened(final View drawerView) {
 					if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
 						topCenterOverlay.setVisibility(View.INVISIBLE);
 				}
 
 				@Override
-				public void onDrawerClosed(View drawerView) {
+				public void onDrawerClosed(final View drawerView) {
 					if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
 						topCenterOverlay.setVisibility(View.VISIBLE);
+					if (menuButton != null) {
+						menuButton.setVisibility(View.VISIBLE);
+						menuButtonVisible = true;
+					}
 				}
 			});
 		}
@@ -387,9 +408,13 @@ public class Map extends FragmentActivity {
 
 				mMap.setPadding(mDrawerLayout == null ? Util.dpToPx(this, 200) : 0, statusbar, navBarWidth, navBarHeight);
 				findViewById(R.id.left_drawer).setPadding(0, statusbar + 10, 0, navBarHeight);
+				if (menuButton != null)
+					menuButton.setPadding(0, 0, 0, 10 + navBarHeight);
 			} else {
 				mMap.setPadding(0, statusbar, 0, navBarHeight);
 				findViewById(R.id.left_drawer).setPadding(0, statusbar + 10, 0, navBarHeight);
+				if (menuButton != null)
+					menuButton.setPadding(0, 0, 0, 10 + navBarHeight);
 			}
 		}
 
@@ -639,7 +664,7 @@ public class Map extends FragmentActivity {
 	private void updateValueText() {
 		valueTv.setText(getFormattedString());
 	}
-	
+
 	@Override
 	public boolean onPrepareOptionsMenu(final Menu menu) {
 		if (mDrawerLayout.isDrawerOpen(GravityCompat.START))
@@ -648,5 +673,5 @@ public class Map extends FragmentActivity {
 			mDrawerLayout.openDrawer(GravityCompat.START);
 		return false;
 	}
-	
+
 }
