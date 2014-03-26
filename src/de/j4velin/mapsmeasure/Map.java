@@ -228,10 +228,9 @@ public class Map extends FragmentActivity {
 		try {
 			super.onCreate(savedInstanceState);
 		} catch (final BadParcelableException bpe) {
-			Serializable t = savedInstanceState.getSerializable("trace");
 			savedInstanceState.remove("trace");
 			super.onCreate(savedInstanceState);
-			savedInstanceState.putSerializable("trace", t);
+			bpe.printStackTrace();
 		}
 		setContentView(R.layout.activity_map);
 
