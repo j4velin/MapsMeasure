@@ -487,7 +487,8 @@ public class Map extends FragmentActivity {
 				builder.setTitle(R.string.about);
 
 				TextView tv = new TextView(Map.this);
-				tv.setPadding(10, 10, 10, 10);
+				int pad = (Util.dpToPx(Map.this, 10));
+				tv.setPadding(pad, pad, pad, pad);
 
 				try {
 					tv.setText(R.string.about_text);
