@@ -17,7 +17,6 @@
 package de.j4velin.mapsmeasure;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
@@ -84,6 +83,10 @@ import android.widget.TextView.OnEditorActionListener;
 
 public class Map extends FragmentActivity {
 
+	private static enum MeasureType {
+		Distance, Area, Altitude
+	};
+
 	// the map to draw to
 	private GoogleMap mMap;
 	private DrawerLayout mDrawerLayout;
@@ -98,7 +101,7 @@ public class Map extends FragmentActivity {
 	private Polygon areaOverlay;
 
 	private float distance; // in meters
-	private boolean showArea; // in square meters
+	private MeasureType type; // the currently selected measure type
 	private TextView valueTv; // the view displaying the distance/area & unit
 
 	private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT = Color.argb(128, 255, 0, 0);
@@ -120,7 +123,7 @@ public class Map extends FragmentActivity {
 	 * @return the formatted text for the valueTextView
 	 */
 	private String getFormattedString() {
-		if (!showArea) {
+		if (type == MeasureType.Distance) {
 			if (metric) {
 				if (distance > 1000)
 					return formatter_two_dec.format(distance / 1000) + " km";
@@ -132,7 +135,7 @@ public class Map extends FragmentActivity {
 				else
 					return formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
 			}
-		} else {
+		} else if (type == MeasureType.Area) {
 			double area;
 			if (areaOverlay != null)
 				areaOverlay.remove();
@@ -153,6 +156,8 @@ public class Map extends FragmentActivity {
 				else
 					return formatter_no_dec.format(Math.max(0, area / 0.09290304d)) + " ft²";
 			}
+		} else {
+			return "not yet supported";
 		}
 	}
 
@@ -259,7 +264,7 @@ public class Map extends FragmentActivity {
 			mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
 			mDrawerLayout.setDrawerListener(new DrawerListener() {
-				
+
 				private boolean menuButtonVisible = true;
 
 				@Override
@@ -332,7 +337,12 @@ public class Map extends FragmentActivity {
 		valueTv.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				toggleArea(!showArea);
+				if (type == MeasureType.Distance)
+					changeType(MeasureType.Area);
+				// else if (type == MeasureType.Area)
+				// changeType(MeasureType.Altitude);
+				else
+					changeType(MeasureType.Distance);
 			}
 		});
 
@@ -477,7 +487,7 @@ public class Map extends FragmentActivity {
 		});
 
 		toggleSatelliteView(prefs.getBoolean("satellite", false));
-		toggleArea(false);
+		changeType(MeasureType.Distance);
 
 		findViewById(R.id.mapview_map).setOnClickListener(new OnClickListener() {
 			@Override
@@ -494,13 +504,13 @@ public class Map extends FragmentActivity {
 		findViewById(R.id.measure_area).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				toggleArea(true);
+				changeType(MeasureType.Area);
 			}
 		});
 		findViewById(R.id.measure_distance).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				toggleArea(false);
+				changeType(MeasureType.Distance);
 			}
 		});
 		findViewById(R.id.about).setOnClickListener(new OnClickListener() {
@@ -549,21 +559,21 @@ public class Map extends FragmentActivity {
 	}
 
 	/**
-	 * Change between measuring a distance and an area
+	 * Change the "type" of measuring: Distance, Area or Altitude
 	 * 
-	 * @param measureArea
-	 *            true to measure area
+	 * @param newType
+	 *            the type to change to
 	 */
-	private void toggleArea(boolean measureArea) {
-		showArea = measureArea;
+	private void changeType(final MeasureType newType) {
+		type = newType;
 		findViewById(R.id.measure_area).setBackgroundResource(
-				measureArea ? R.drawable.background_selected : R.drawable.background_normal);
+				newType == MeasureType.Area ? R.drawable.background_selected : R.drawable.background_normal);
 		findViewById(R.id.measure_distance).setBackgroundResource(
-				measureArea ? R.drawable.background_normal : R.drawable.background_selected);
+				newType == MeasureType.Distance ? R.drawable.background_normal : R.drawable.background_selected);
 		updateValueText();
 		if (mDrawerLayout != null)
 			mDrawerLayout.closeDrawers();
-		if (!showArea) {
+		if (newType != MeasureType.Area) {
 			if (areaOverlay != null)
 				areaOverlay.remove();
 		}
