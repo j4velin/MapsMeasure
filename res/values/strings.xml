@@ -20,5 +20,9 @@
     <string name="save">Save</string>
     <string name="load">Load</string>
     <string name="share">Share</string>
+    <string name="file_saved_to">File saved to %s</string>
+    <string name="error">Error: %s</string>
+    <string name="select_file">Select file</string>
+    <string name="no_files_found">No files found in %s</string>
 
 </resources>

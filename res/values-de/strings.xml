@@ -17,5 +17,12 @@
     <string name="no_location_found">Ort nicht gefunden</string>
     <string name="units">Einheiten</string>
     <string name="savenshare">Speichern &amp; teilen</string>
+    <string name="save">Speichern</string>
+    <string name="load">Laden</string>
+    <string name="share">Teilen</string>
+    <string name="file_saved_to">Datei gespeichert in %s</string>
+    <string name="error">Fehler: %s</string>
+    <string name="select_file">Datei wählen</string>
+    <string name="no_files_found">Keine Dateien in %s gefunden</string>
 
 </resources>

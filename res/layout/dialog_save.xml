@@ -13,6 +13,7 @@
         android:drawableLeft="@drawable/ic_action_save"
         android:drawablePadding="10dp"
         android:gravity="center_vertical"
+        android:padding="10dp"
         android:text="@string/save"
         android:textAppearance="?android:textAppearanceMedium" />
 
@@ -24,6 +25,7 @@
         android:drawableLeft="@drawable/ic_action_load"
         android:drawablePadding="10dp"
         android:gravity="center_vertical"
+        android:padding="10dp"
         android:text="@string/load"
         android:textAppearance="?android:textAppearanceMedium" />
 
@@ -34,6 +36,7 @@
         android:drawableLeft="@drawable/ic_action_share"
         android:drawablePadding="10dp"
         android:gravity="center_vertical"
+        android:padding="10dp"
         android:text="@string/share"
         android:textAppearance="?android:textAppearanceMedium" />
 

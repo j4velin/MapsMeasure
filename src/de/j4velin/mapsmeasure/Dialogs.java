@@ -20,9 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Stack;
-
 import com.google.android.gms.maps.model.LatLng;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -90,9 +88,10 @@ public class Dialogs {
 							+ ".csv");
 					Util.saveToFile(f, trace);
 					d.dismiss();
-					Toast.makeText(c, "File saved to " + f.getAbsolutePath(), Toast.LENGTH_LONG).show();
+					Toast.makeText(c, c.getString(R.string.file_saved_to, f.getAbsolutePath()), Toast.LENGTH_LONG).show();
 				} catch (Exception e) {
-					Toast.makeText(c, "Error: " + e.getClass().getSimpleName() + "\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+					Toast.makeText(c, c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
+							Toast.LENGTH_LONG).show();
 				}
 			}
 		});
@@ -102,19 +101,21 @@ public class Dialogs {
 			public void onClick(final View v) {
 				final File[] files = c.getDir("traces", Context.MODE_PRIVATE).listFiles();
 				if (files.length == 0) {
-					Toast.makeText(c, "No files found", Toast.LENGTH_SHORT).show();
+					Toast.makeText(c,
+							c.getString(R.string.no_files_found, c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
+							Toast.LENGTH_SHORT).show();
 				} else if (files.length == 1) {
 					try {
 						Util.loadFromFile(files[0], (Map) c);
 						d.dismiss();
 					} catch (IOException e) {
 						e.printStackTrace();
-						Toast.makeText(c, "Error: " + e.getClass().getSimpleName() + "\n" + e.getMessage(), Toast.LENGTH_LONG)
-								.show();
+						Toast.makeText(c, c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
+								Toast.LENGTH_LONG).show();
 					}
 				} else {
 					AlertDialog.Builder b = new AlertDialog.Builder(c);
-					b.setTitle("Select file");
+					b.setTitle(R.string.select_file);
 					CharSequence[] items = new CharSequence[files.length];
 					String filename;
 					Date date;
@@ -136,7 +137,8 @@ public class Dialogs {
 								dialog.dismiss();
 							} catch (IOException e) {
 								e.printStackTrace();
-								Toast.makeText(c, "Error: " + e.getClass().getSimpleName() + "\n" + e.getMessage(),
+								Toast.makeText(c,
+										c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
 										Toast.LENGTH_LONG).show();
 							}
 
@@ -163,7 +165,8 @@ public class Dialogs {
 					c.startActivity(Intent.createChooser(shareIntent, null));
 				} catch (IOException e) {
 					e.printStackTrace();
-					Toast.makeText(c, "Error: " + e.getClass().getSimpleName() + "\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+					Toast.makeText(c, c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
+							Toast.LENGTH_LONG).show();
 				}
 			}
 		});
