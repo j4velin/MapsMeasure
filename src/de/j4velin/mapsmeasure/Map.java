@@ -537,14 +537,16 @@ public class Map extends FragmentActivity {
 			@Override
 			public void onClick(View v) {
 				Dialogs.getSaveNShare(Map.this, trace).show();
-				mDrawerLayout.closeDrawers();
+				if (mDrawerLayout != null)
+					mDrawerLayout.closeDrawers();
 			}
 		});
 		findViewById(R.id.about).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Dialogs.getAbout(Map.this).show();
-				mDrawerLayout.closeDrawers();
+				if (mDrawerLayout != null)
+					mDrawerLayout.closeDrawers();
 			}
 		});
 		findViewById(R.id.moreapps).setOnClickListener(new OnClickListener() {
@@ -624,8 +626,7 @@ public class Map extends FragmentActivity {
 	 * @return the drawn Polygon
 	 */
 	private Marker drawCircle(final LatLng center) {
-		return mMap.addMarker(new MarkerOptions().position(center).flat(true).anchor(0.5f, 0.5f)
-				.icon(marker));
+		return mMap.addMarker(new MarkerOptions().position(center).flat(true).anchor(0.5f, 0.5f).icon(marker));
 	}
 
 	/**
@@ -673,6 +674,8 @@ public class Map extends FragmentActivity {
 
 	@Override
 	public boolean onPrepareOptionsMenu(final Menu menu) {
+		if (mDrawerLayout == null)
+			return true;
 		if (mDrawerLayout.isDrawerOpen(GravityCompat.START))
 			mDrawerLayout.closeDrawers();
 		else
