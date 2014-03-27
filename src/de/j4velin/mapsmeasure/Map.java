@@ -16,10 +16,10 @@
 
 package de.j4velin.mapsmeasure;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.AbstractCollection;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -31,8 +31,13 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -94,7 +99,7 @@ public class Map extends FragmentActivity {
 	// the stacks - everytime the user touches the map, an entry is pushed
 	private Stack<LatLng> trace = new Stack<LatLng>();
 	private Stack<Polyline> lines = new Stack<Polyline>();
-	private Stack<Polygon> points = new Stack<Polygon>();
+	private Stack<Marker> points = new Stack<Marker>();
 
 	private Polygon areaOverlay;
 
@@ -110,6 +115,8 @@ public class Map extends FragmentActivity {
 	public boolean metric; // display in metric units
 
 	private LocationClient locationClient;
+
+	private static BitmapDescriptor marker;
 
 	/**
 	 * Get the formatted string for the valueTextView.
@@ -324,6 +331,15 @@ public class Map extends FragmentActivity {
 			d.show();
 			return;
 		}
+
+		marker = BitmapDescriptorFactory.fromResource(R.drawable.marker);
+		mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+			@Override
+			public boolean onMarkerClick(final Marker click) {
+				addPoint(click.getPosition());
+				return true;
+			}
+		});
 
 		locationClient = new LocationClient(this, new ConnectionCallbacks() {
 			@Override
@@ -545,6 +561,20 @@ public class Map extends FragmentActivity {
 				}
 			}
 		});
+
+		// check if open with csv file
+		if (Intent.ACTION_VIEW.equals(getIntent().getAction()) && getIntent().getType().equals("text/comma-separated-values")) {
+			try {
+				mMap.moveCamera(CameraUpdateFactory.zoomTo(10f));
+				Util.loadFromFile(new File(getIntent().getData().getPath()), this);
+				mMap.moveCamera(CameraUpdateFactory.newLatLng(trace.peek()));
+			} catch (IOException e) {
+				Toast.makeText(this, getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
+						Toast.LENGTH_LONG).show();
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 	/**
@@ -585,20 +615,6 @@ public class Map extends FragmentActivity {
 		getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("satellite", enable).commit();
 	}
 
-	private LatLng getPoint(final LatLng center, final float radius, final double angle) {
-		double east = radius * Math.cos(angle);
-		double north = radius * Math.sin(angle);
-
-		double cLat = center.latitude;
-		double cLng = center.longitude;
-		double latRadius = SphericalUtil.EARTH_RADIUS * Math.cos(cLat / 180 * Math.PI);
-
-		double newLat = cLat + (north / SphericalUtil.EARTH_RADIUS / Math.PI * 180);
-		double newLng = cLng + (east / latRadius / Math.PI * 180);
-
-		return new LatLng(newLat, newLng);
-	}
-
 	/**
 	 * Draws a circle at the given point.
 	 * 
@@ -609,14 +625,9 @@ public class Map extends FragmentActivity {
 	 *            the point where the user clicked
 	 * @return the drawn Polygon
 	 */
-	private Polygon drawCircle(final LatLng center) {
-		int totalPonts = 30; // number of corners of the pseudo-circle
-		List<LatLng> points = new ArrayList<LatLng>(totalPonts);
-		float radius = (float) (750000 / Math.pow(2, mMap.getCameraPosition().zoom));
-		for (int i = 0; i < totalPonts; i++) {
-			points.add(getPoint(center, radius, i * 2 * Math.PI / totalPonts));
-		}
-		return mMap.addPolygon(new PolygonOptions().addAll(points).strokeWidth(0).fillColor(COLOR_POINT));
+	private Marker drawCircle(final LatLng center) {
+		return mMap.addMarker(new MarkerOptions().position(center).flat(true).anchor(0.5f, 0.5f)
+				.icon(marker));
 	}
 
 	/**
