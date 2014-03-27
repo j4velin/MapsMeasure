@@ -16,5 +16,6 @@
     <string name="delete_all">Alle %d Punkte löschen?</string>
     <string name="no_location_found">Ort nicht gefunden</string>
     <string name="units">Einheiten</string>
+    <string name="savenshare">Speichern &amp; teilen</string>
 
 </resources>

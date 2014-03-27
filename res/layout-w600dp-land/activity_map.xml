@@ -35,8 +35,6 @@
             android:paddingRight="10dp"
             android:src="@drawable/ic_action_delete" />
     </LinearLayout>
-    
-
 
     <ScrollView
         android:id="@+id/left_drawer"
@@ -140,7 +138,8 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dip"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:minHeight="20dp" />
 
             <TextView
                 android:id="@+id/moreapps"

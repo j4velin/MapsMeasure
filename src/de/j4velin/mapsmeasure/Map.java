@@ -200,13 +200,25 @@ public class Map extends FragmentActivity {
 	 * @param p
 	 *            the new point
 	 */
-	private void addPoint(final LatLng p) {
+	void addPoint(final LatLng p) {
 		if (!trace.isEmpty()) {
 			lines.push(mMap.addPolyline(new PolylineOptions().color(COLOR_LINE).add(trace.peek()).add(p)));
 			distance += SphericalUtil.computeDistanceBetween(p, trace.peek());
 		}
 		points.push(drawCircle(p));
 		trace.push(p);
+		updateValueText();
+	}
+
+	/**
+	 * Resets the map by removing all points, lines and setting the text to 0
+	 */
+	void clear() {
+		mMap.clear();
+		trace.clear();
+		lines.clear();
+		points.clear();
+		distance = 0;
 		updateValueText();
 	}
 
@@ -359,12 +371,7 @@ public class Map extends FragmentActivity {
 				builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						mMap.clear();
-						trace.clear();
-						lines.clear();
-						points.clear();
-						distance = 0;
-						updateValueText();
+						clear();
 						dialog.dismiss();
 					}
 				});
@@ -511,10 +518,18 @@ public class Map extends FragmentActivity {
 				changeType(MeasureType.Distance);
 			}
 		});
+		findViewById(R.id.savenshare).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Dialogs.getSaveNShare(Map.this, trace).show();
+				mDrawerLayout.closeDrawers();
+			}
+		});
 		findViewById(R.id.about).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Dialogs.getAbout(Map.this).show();
+				mDrawerLayout.closeDrawers();
 			}
 		});
 		findViewById(R.id.moreapps).setOnClickListener(new OnClickListener() {
@@ -543,7 +558,7 @@ public class Map extends FragmentActivity {
 		findViewById(R.id.measure_area).setBackgroundResource(
 				newType == MeasureType.Area ? R.drawable.background_selected : R.drawable.background_normal);
 		findViewById(R.id.measure_distance).setBackgroundResource(
-				newType == MeasureType.Distance ? R.drawable.background_normal : R.drawable.background_selected);
+				newType == MeasureType.Distance ? R.drawable.background_selected : R.drawable.background_normal);
 		updateValueText();
 		if (mDrawerLayout != null)
 			mDrawerLayout.closeDrawers();

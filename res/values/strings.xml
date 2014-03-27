@@ -16,5 +16,9 @@
     <string name="delete_all">Delete all %d points?</string>
     <string name="no_location_found">No location found</string>
     <string name="units">Units</string>
+    <string name="savenshare">Save &amp; share</string>
+    <string name="save">Save</string>
+    <string name="load">Load</string>
+    <string name="share">Share</string>
 
 </resources>

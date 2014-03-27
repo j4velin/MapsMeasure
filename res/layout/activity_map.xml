@@ -153,7 +153,21 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dip"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:minHeight="20dp" />
+            
+             <TextView
+                android:id="@+id/savenshare"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="-10dp"
+                android:background="@drawable/background_normal"
+                android:drawableLeft="@drawable/ic_action_save"
+                android:drawablePadding="5dp"
+                android:gravity="center_vertical"
+                android:text="@string/savenshare"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:textColor="#000" />
 
             <TextView
                 android:id="@+id/moreapps"
