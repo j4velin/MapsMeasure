@@ -49,7 +49,6 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -63,7 +62,6 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.DrawerLayout.DrawerListener;
-import android.text.method.LinkMovementMethod;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -516,31 +514,7 @@ public class Map extends FragmentActivity {
 		findViewById(R.id.about).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(Map.this);
-				builder.setTitle(R.string.about);
-
-				TextView tv = new TextView(Map.this);
-				int pad = (Util.dpToPx(Map.this, 10));
-				tv.setPadding(pad, pad, pad, pad);
-
-				try {
-					tv.setText(R.string.about_text);
-					tv.append(getString(R.string.app_version,
-							Map.this.getPackageManager().getPackageInfo(Map.this.getPackageName(), 0).versionName));
-					tv.setMovementMethod(LinkMovementMethod.getInstance());
-				} catch (NameNotFoundException e1) {
-					// should not happen as the app is definitely installed when
-					// seeing the dialog
-					e1.printStackTrace();
-				}
-				builder.setView(tv);
-				builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(final DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-				builder.create().show();
+				Dialogs.getAbout(Map.this).show();
 			}
 		});
 		findViewById(R.id.moreapps).setOnClickListener(new OnClickListener() {
