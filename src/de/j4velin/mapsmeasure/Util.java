@@ -19,9 +19,9 @@ package de.j4velin.mapsmeasure;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -29,6 +29,7 @@ import java.util.Stack;
 import com.google.android.gms.maps.model.LatLng;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.TypedValue;
 
 public class Util {
@@ -71,15 +72,18 @@ public class Util {
 	}
 
 	/**
-	 * Replaces the current points on the map with the one from the provided file
+	 * Replaces the current points on the map with the one from the provided
+	 * file
 	 * 
-	 * @param f the file to read from
-	 * @param m the Map activity to add the new points to
+	 * @param f
+	 *            the file to read from
+	 * @param m
+	 *            the Map activity to add the new points to
 	 * @throws IOException
 	 */
-	static void loadFromFile(final File f, final Map m) throws IOException {
+	static void loadFromFile(final Uri f, final Map m) throws IOException {
 		List<LatLng> list = new LinkedList<LatLng>();
-		BufferedReader in = new BufferedReader(new FileReader(f));
+		BufferedReader in = new BufferedReader(new InputStreamReader(m.getContentResolver().openInputStream(f)));
 		String line;
 		String[] data;
 		while ((line = in.readLine()) != null) {

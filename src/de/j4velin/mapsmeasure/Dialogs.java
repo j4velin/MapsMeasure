@@ -20,13 +20,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Stack;
+
 import com.google.android.gms.maps.model.LatLng;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
 import android.support.v4.content.FileProvider;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
@@ -106,7 +109,7 @@ public class Dialogs {
 							Toast.LENGTH_SHORT).show();
 				} else if (files.length == 1) {
 					try {
-						Util.loadFromFile(files[0], (Map) c);
+						Util.loadFromFile(Uri.fromFile(files[0]), (Map) c);
 						d.dismiss();
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -133,7 +136,7 @@ public class Dialogs {
 						@Override
 						public void onClick(final DialogInterface dialog, int which) {
 							try {
-								Util.loadFromFile(files[which], (Map) c);
+								Util.loadFromFile(Uri.fromFile(files[which]), (Map) c);
 								dialog.dismiss();
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -141,7 +144,6 @@ public class Dialogs {
 										c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
 										Toast.LENGTH_LONG).show();
 							}
-
 						}
 					});
 					b.create().show();

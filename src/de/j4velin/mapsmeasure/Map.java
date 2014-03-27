@@ -16,7 +16,6 @@
 
 package de.j4velin.mapsmeasure;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.AbstractCollection;
@@ -563,10 +562,9 @@ public class Map extends FragmentActivity {
 		});
 
 		// check if open with csv file
-		if (Intent.ACTION_VIEW.equals(getIntent().getAction()) && getIntent().getType().equals("text/comma-separated-values")) {
+		if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
 			try {
-				mMap.moveCamera(CameraUpdateFactory.zoomTo(10f));
-				Util.loadFromFile(new File(getIntent().getData().getPath()), this);
+				Util.loadFromFile(getIntent().getData(), this);
 				mMap.moveCamera(CameraUpdateFactory.newLatLng(trace.peek()));
 			} catch (IOException e) {
 				Toast.makeText(this, getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
