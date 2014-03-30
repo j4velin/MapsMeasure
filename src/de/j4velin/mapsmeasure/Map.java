@@ -349,7 +349,9 @@ public class Map extends FragmentActivity {
 			@Override
 			public void onConnected(final Bundle b) {
 				Location l = locationClient.getLastLocation();
-				if (l != null) {
+				// only move to current position if not zoomed in at another
+				// location already
+				if (l != null && mMap.getCameraPosition().zoom <= 2) {
 					mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()), 16));
 				}
 				locationClient.disconnect();
