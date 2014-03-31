@@ -72,11 +72,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -108,10 +104,10 @@ public class Map extends FragmentActivity {
 
 	private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT = Color.argb(128, 255, 0, 0);
 
-	private final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
-	private final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
+	final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
+	final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
 
-	public boolean metric; // display in metric units
+	boolean metric; // display in metric units
 
 	private LocationClient locationClient;
 
@@ -471,38 +467,7 @@ public class Map extends FragmentActivity {
 		metricTV.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				final Dialog d = new Dialog(Map.this);
-				d.requestWindowFeature(Window.FEATURE_NO_TITLE);
-				d.setContentView(R.layout.dialog_unit);
-				CheckBox metricCb = (CheckBox) d.findViewById(R.id.metric);
-				metricCb.setChecked(metric);
-				metricCb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-					@Override
-					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-						metric = !metric;
-						prefs.edit().putBoolean("metric", isChecked).commit();
-						updateValueText();
-					}
-				});
-				((TextView) d.findViewById(R.id.distance)).setText(formatter_two_dec.format(Math.max(0, distance)) + " m\n"
-						+ formatter_two_dec.format(distance / 1000) + " km\n\n"
-						+ formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft\n"
-						+ formatter_two_dec.format(Math.max(0, distance / 0.9144)) + " yd\n"
-						+ formatter_two_dec.format(distance / 1609.344f) + " mi");
-
-				double area = SphericalUtil.computeArea(trace);
-				((TextView) d.findViewById(R.id.area)).setText(formatter_two_dec.format(Math.max(0, area)) + " m²\n"
-						+ formatter_two_dec.format(area / 10000) + " ha\n" + formatter_two_dec.format(area / 1000000)
-						+ " km²\n\n" + formatter_two_dec.format(Math.max(0, area / 0.09290304d)) + " ft²\n"
-						+ formatter_two_dec.format(area / 4046.8726099d) + " ac (U.S. Survey)\n"
-						+ formatter_two_dec.format(area / 2589988.110336d) + " mi²");
-				d.findViewById(R.id.close).setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(final View v) {
-						d.dismiss();
-					}
-				});
-				d.show();
+				Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace)).show();
 				if (mDrawerLayout != null)
 					mDrawerLayout.closeDrawers();
 			}
@@ -670,7 +635,7 @@ public class Map extends FragmentActivity {
 	/**
 	 * Updates the valueTextView at the top of the screen
 	 */
-	private void updateValueText() {
+	void updateValueText() {
 		valueTv.setText(getFormattedString());
 	}
 

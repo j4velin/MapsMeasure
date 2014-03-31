@@ -22,7 +22,6 @@ import java.util.Date;
 import java.util.Stack;
 
 import com.google.android.gms.maps.model.LatLng;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -35,8 +34,11 @@ import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class Dialogs {
 
@@ -170,6 +172,50 @@ public class Dialogs {
 					Toast.makeText(c, c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
 							Toast.LENGTH_LONG).show();
 				}
+			}
+		});
+		return d;
+	}
+
+	/**
+	 * @param m
+	 *            the Map
+	 * @param distance
+	 *            the current distance
+	 * @param area
+	 *            the current area
+	 * @return the units dialog
+	 */
+	public static Dialog getUnits(final Map m, float distance, double area) {
+		final Dialog d = new Dialog(m);
+		d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		d.setContentView(R.layout.dialog_unit);
+		CheckBox metricCb = (CheckBox) d.findViewById(R.id.metric);
+		metricCb.setChecked(m.metric);
+		metricCb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				m.metric = !m.metric;
+				m.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("metric", isChecked).commit();
+				m.updateValueText();
+			}
+		});
+		((TextView) d.findViewById(R.id.distance)).setText(Map.formatter_two_dec.format(Math.max(0, distance)) + " m\n"
+				+ Map.formatter_two_dec.format(distance / 1000) + " km\n\n"
+				+ Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft\n"
+				+ Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)) + " yd\n"
+				+ Map.formatter_two_dec.format(distance / 1609.344f) + " mi\n"
+				+ Map.formatter_two_dec.format(distance / 1852f) + " nautic miles");
+
+		((TextView) d.findViewById(R.id.area)).setText(Map.formatter_two_dec.format(Math.max(0, area)) + " m²\n"
+				+ Map.formatter_two_dec.format(area / 10000) + " ha\n" + Map.formatter_two_dec.format(area / 1000000)
+				+ " km²\n\n" + Map.formatter_two_dec.format(Math.max(0, area / 0.09290304d)) + " ft²\n"
+				+ Map.formatter_two_dec.format(area / 4046.8726099d) + " ac (U.S. Survey)\n"
+				+ Map.formatter_two_dec.format(area / 2589988.110336d) + " mi²");
+		d.findViewById(R.id.close).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				d.dismiss();
 			}
 		});
 		return d;
