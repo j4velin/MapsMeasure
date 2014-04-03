@@ -336,6 +336,17 @@ public class Map extends FragmentActivity {
 			}
 		});
 
+		// check if open with csv file
+		if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+			try {
+				Util.loadFromFile(getIntent().getData(), this);
+				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(trace.peek(), 16));
+			} catch (IOException e) {
+				Toast.makeText(this, getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
+						Toast.LENGTH_LONG).show();
+				e.printStackTrace();
+			}
+		}
 		locationClient = new LocationClient(this, new ConnectionCallbacks() {
 			@Override
 			public void onDisconnected() {
@@ -529,19 +540,6 @@ public class Map extends FragmentActivity {
 				}
 			}
 		});
-
-		// check if open with csv file
-		if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-			try {
-				Util.loadFromFile(getIntent().getData(), this);
-				mMap.moveCamera(CameraUpdateFactory.newLatLng(trace.peek()));
-			} catch (IOException e) {
-				Toast.makeText(this, getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
-						Toast.LENGTH_LONG).show();
-				e.printStackTrace();
-			}
-		}
-
 	}
 
 	/**
