@@ -205,7 +205,7 @@ public class Dialogs {
 				+ Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft\n"
 				+ Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)) + " yd\n"
 				+ Map.formatter_two_dec.format(distance / 1609.344f) + " mi\n"
-				+ Map.formatter_two_dec.format(distance / 1852f) + " nautic miles");
+				+ Map.formatter_two_dec.format(distance / 1852f) + " nautical miles");
 
 		((TextView) d.findViewById(R.id.area)).setText(Map.formatter_two_dec.format(Math.max(0, area)) + " m²\n"
 				+ Map.formatter_two_dec.format(area / 10000) + " ha\n" + Map.formatter_two_dec.format(area / 1000000)
