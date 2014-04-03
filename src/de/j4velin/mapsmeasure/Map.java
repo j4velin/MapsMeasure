@@ -103,6 +103,7 @@ public class Map extends FragmentActivity {
 	private TextView valueTv; // the view displaying the distance/area & unit
 
 	private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT = Color.argb(128, 255, 0, 0);
+	private final static float LINE_WIDTH = 5f;
 
 	final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
 	final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
@@ -204,7 +205,7 @@ public class Map extends FragmentActivity {
 	 */
 	void addPoint(final LatLng p) {
 		if (!trace.isEmpty()) {
-			lines.push(mMap.addPolyline(new PolylineOptions().color(COLOR_LINE).add(trace.peek()).add(p)));
+			lines.push(mMap.addPolyline(new PolylineOptions().color(COLOR_LINE).width(LINE_WIDTH).add(trace.peek()).add(p)));
 			distance += SphericalUtil.computeDistanceBetween(p, trace.peek());
 		}
 		points.push(drawCircle(p));
