@@ -12,9 +12,9 @@
 
         <fragment
             android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            class="com.google.android.gms.maps.SupportMapFragment" />
+            android:layout_height="match_parent" />
 
         <LinearLayout
             android:id="@+id/topCenterOverlay"
@@ -155,8 +155,8 @@
                 android:layout_height="0dip"
                 android:layout_weight="1"
                 android:minHeight="20dp" />
-            
-             <TextView
+
+            <TextView
                 android:id="@+id/savenshare"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
