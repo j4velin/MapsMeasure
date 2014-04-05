@@ -633,7 +633,8 @@ public class Map extends FragmentActivity {
 	 * Updates the valueTextView at the top of the screen
 	 */
 	void updateValueText() {
-		valueTv.setText(getFormattedString());
+		if (valueTv != null)
+			valueTv.setText(getFormattedString());
 	}
 
 	@Override
