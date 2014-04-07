@@ -18,7 +18,6 @@ package de.j4velin.mapsmeasure;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Stack;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -101,7 +100,6 @@ public class Dialogs {
 			}
 		});
 		d.findViewById(R.id.load).setOnClickListener(new OnClickListener() {
-			@SuppressWarnings("deprecation")
 			@Override
 			public void onClick(final View v) {
 				final File[] files = c.getDir("traces", Context.MODE_PRIVATE).listFiles();
@@ -120,25 +118,13 @@ public class Dialogs {
 					}
 				} else {
 					AlertDialog.Builder b = new AlertDialog.Builder(c);
-					b.setTitle(R.string.select_file);
-					CharSequence[] items = new CharSequence[files.length];
-					String filename;
-					Date date;
-					for (int i = 0; i < files.length; i++) {
-						filename = files[i].getName();
-						try {
-							date = new Date(Long.parseLong(filename.substring(filename.lastIndexOf("_") + 1,
-									filename.lastIndexOf("."))));
-							items[i] = date.toLocaleString();
-						} catch (NumberFormatException nfe) {
-							items[i] = filename;
-						}
-					}
-					b.setItems(items, new DialogInterface.OnClickListener() {
+					b.setTitle(R.string.select_file);		
+					final DeleteAdapter da = new DeleteAdapter(files, (Map) c);
+					b.setAdapter(da, new DialogInterface.OnClickListener() {
 						@Override
-						public void onClick(final DialogInterface dialog, int which) {
+						public void onClick(DialogInterface dialog, int which) {
 							try {
-								Util.loadFromFile(Uri.fromFile(files[which]), (Map) c);
+								Util.loadFromFile(Uri.fromFile(da.getFile(which)), (Map) c);
 								dialog.dismiss();
 							} catch (IOException e) {
 								e.printStackTrace();
