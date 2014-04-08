@@ -88,7 +88,12 @@ public class Util {
 		String[] data;
 		while ((line = in.readLine()) != null) {
 			data = line.split(";");
-			list.add(new LatLng(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
+			try {
+				list.add(new LatLng(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
+			} catch (NumberFormatException nfe) {
+				// should not happen when opening a valid file
+				nfe.printStackTrace();
+			}
 		}
 		in.close();
 		m.clear();
