@@ -93,6 +93,9 @@ public class Util {
 			} catch (NumberFormatException nfe) {
 				// should not happen when opening a valid file
 				nfe.printStackTrace();
+			} catch (ArrayIndexOutOfBoundsException aiabe) {
+				// should not happen when opening a valid file
+				aiabe.printStackTrace();
 			}
 		}
 		in.close();
