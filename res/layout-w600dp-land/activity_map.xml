@@ -106,6 +106,17 @@
                 android:textColor="#000" />
 
             <TextView
+                android:id="@+id/measure_elevation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_elevation"
+                android:drawablePadding="5dp"
+                android:gravity="center_vertical"
+                android:text="@string/measure_elevation"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="#000" />
+
+            <TextView
                 style="?android:attr/listSeparatorTextViewStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

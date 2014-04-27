@@ -18,12 +18,14 @@ package de.j4velin.mapsmeasure;
 
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.AbstractCollection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 
+import org.json.JSONObject;
+
+import com.android.vending.billing.IInAppBillingService;
 import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
@@ -48,10 +50,12 @@ import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Address;
@@ -62,11 +66,15 @@ import android.os.AsyncTask;
 import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.DrawerLayout.DrawerListener;
 import android.util.DisplayMetrics;
+import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
@@ -82,14 +90,12 @@ import android.widget.TextView.OnEditorActionListener;
 public class Map extends FragmentActivity {
 
 	private static enum MeasureType {
-		Distance, Area, Altitude
+		DISTANCE, AREA, ELEVATION
 	};
 
 	// the map to draw to
 	private GoogleMap mMap;
 	private DrawerLayout mDrawerLayout;
-
-	// private ActionBarDrawerToggle mDrawerToggle;
 
 	// the stacks - everytime the user touches the map, an entry is pushed
 	private Stack<LatLng> trace = new Stack<LatLng>();
@@ -98,6 +104,7 @@ public class Map extends FragmentActivity {
 
 	private Polygon areaOverlay;
 
+	private Pair<Float, Float> altitude;
 	private float distance; // in meters
 	private MeasureType type; // the currently selected measure type
 	private TextView valueTv; // the view displaying the distance/area & unit
@@ -114,6 +121,32 @@ public class Map extends FragmentActivity {
 
 	private static BitmapDescriptor marker;
 
+	private IInAppBillingService mService;
+	private static boolean PRO_VERSION = false;
+
+	ServiceConnection mServiceConn = new ServiceConnection() {
+		@Override
+		public void onServiceDisconnected(final ComponentName name) {
+			mService = null;
+		}
+
+		@Override
+		public void onServiceConnected(final ComponentName name, final IBinder service) {
+			mService = IInAppBillingService.Stub.asInterface(service);
+			try {
+				Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
+				if (ownedItems.getInt("RESPONSE_CODE") == 0) {
+					PRO_VERSION = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST").contains(
+							"de.j4velin.mapsmeasure.billing.pro");
+					getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("pro", PRO_VERSION).commit();
+				}
+			} catch (RemoteException e) {
+				Toast.makeText(Map.this, e.getClass().getName() + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+				e.printStackTrace();
+			}
+		}
+	};
+
 	/**
 	 * Get the formatted string for the valueTextView.
 	 * 
@@ -124,7 +157,7 @@ public class Map extends FragmentActivity {
 	 * @return the formatted text for the valueTextView
 	 */
 	private String getFormattedString() {
-		if (type == MeasureType.Distance) {
+		if (type == MeasureType.DISTANCE) {
 			if (metric) {
 				if (distance > 1000)
 					return formatter_two_dec.format(distance / 1000) + " km";
@@ -136,7 +169,7 @@ public class Map extends FragmentActivity {
 				else
 					return formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
 			}
-		} else if (type == MeasureType.Area) {
+		} else if (type == MeasureType.AREA) {
 			double area;
 			if (areaOverlay != null)
 				areaOverlay.remove();
@@ -157,6 +190,36 @@ public class Map extends FragmentActivity {
 				else
 					return formatter_no_dec.format(Math.max(0, area / 0.09290304d)) + " ft²";
 			}
+		} else if (type == MeasureType.ELEVATION) {
+			if (altitude == null) {
+				final Handler h = new Handler();
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						altitude = Util.getElevation(trace);
+						h.post(new Runnable() {
+							@Override
+							public void run() {
+								if (altitude == null) {
+									Dialogs.getElevationErrorDialog(Map.this).show();
+									changeType(MeasureType.DISTANCE);
+								} else {
+									updateValueText();
+								}
+							}
+						});
+					}
+				}).start();
+				return "Loading...";
+			} else {
+				String re = metric ? formatter_two_dec.format(altitude.first) + " m\u2B06, "
+						+ formatter_two_dec.format(-1 * altitude.second) + " m\u2B07" : formatter_two_dec
+						.format(altitude.first / 0.3048f)
+						+ " ft\u2B06"
+						+ formatter_two_dec.format(-1 * altitude.second / 0.3048f) + " ft\u2B07";
+				altitude = null;
+				return re;
+			}
 		} else {
 			return "not yet supported";
 		}
@@ -171,7 +234,7 @@ public class Map extends FragmentActivity {
 			// Casting to Stack<LatLng> apparently results in
 			// "java.lang.ClassCastException: java.util.ArrayList cannot be cast to java.util.Stack"
 			// on some devices
-			AbstractCollection<LatLng> tmp = (AbstractCollection<LatLng>) savedInstanceState.getSerializable("trace");
+			List<LatLng> tmp = (List<LatLng>) savedInstanceState.getSerializable("trace");
 			Iterator<LatLng> it = tmp.iterator();
 			while (it.hasNext()) {
 				addPoint(it.next());
@@ -370,12 +433,14 @@ public class Map extends FragmentActivity {
 		valueTv.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				if (type == MeasureType.Distance)
-					changeType(MeasureType.Area);
-				// else if (type == MeasureType.Area)
-				// changeType(MeasureType.Altitude);
+				if (type == MeasureType.DISTANCE)
+					changeType(MeasureType.AREA);
+				// only switch to elevation mode is an internet connection is
+				// available and user has access to this feature
+				else if (type == MeasureType.AREA && Util.checkInternetConnection(Map.this) && PRO_VERSION)
+					changeType(MeasureType.ELEVATION);
 				else
-					changeType(MeasureType.Distance);
+					changeType(MeasureType.DISTANCE);
 			}
 		});
 
@@ -484,30 +549,40 @@ public class Map extends FragmentActivity {
 		});
 
 		toggleSatelliteView(prefs.getBoolean("satellite", false));
-		changeType(MeasureType.Distance);
+		changeType(MeasureType.DISTANCE);
 
 		findViewById(R.id.mapview_map).setOnClickListener(new OnClickListener() {
 			@Override
-			public void onClick(View v) {
+			public void onClick(final View v) {
 				toggleSatelliteView(false);
 			}
 		});
 		findViewById(R.id.mapview_satellite).setOnClickListener(new OnClickListener() {
 			@Override
-			public void onClick(View v) {
+			public void onClick(final View v) {
 				toggleSatelliteView(true);
 			}
 		});
 		findViewById(R.id.measure_area).setOnClickListener(new OnClickListener() {
 			@Override
-			public void onClick(View v) {
-				changeType(MeasureType.Area);
+			public void onClick(final View v) {
+				changeType(MeasureType.AREA);
 			}
 		});
 		findViewById(R.id.measure_distance).setOnClickListener(new OnClickListener() {
 			@Override
-			public void onClick(View v) {
-				changeType(MeasureType.Distance);
+			public void onClick(final View v) {
+				changeType(MeasureType.DISTANCE);
+			}
+		});
+		findViewById(R.id.measure_elevation).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				if (PRO_VERSION) {
+					changeType(MeasureType.ELEVATION);
+				} else {
+					Dialogs.getElevationAccessDialog(Map.this, mService).show();
+				}
 			}
 		});
 		findViewById(R.id.savenshare).setOnClickListener(new OnClickListener() {
@@ -539,6 +614,12 @@ public class Map extends FragmentActivity {
 				}
 			}
 		});
+
+		PRO_VERSION = prefs.getBoolean("pro", false);
+		if (!PRO_VERSION) {
+			bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn,
+					Context.BIND_AUTO_CREATE);
+		}
 	}
 
 	/**
@@ -550,13 +631,15 @@ public class Map extends FragmentActivity {
 	private void changeType(final MeasureType newType) {
 		type = newType;
 		findViewById(R.id.measure_area).setBackgroundResource(
-				newType == MeasureType.Area ? R.drawable.background_selected : R.drawable.background_normal);
+				newType == MeasureType.AREA ? R.drawable.background_selected : R.drawable.background_normal);
 		findViewById(R.id.measure_distance).setBackgroundResource(
-				newType == MeasureType.Distance ? R.drawable.background_selected : R.drawable.background_normal);
+				newType == MeasureType.DISTANCE ? R.drawable.background_selected : R.drawable.background_normal);
+		findViewById(R.id.measure_elevation).setBackgroundResource(
+				newType == MeasureType.ELEVATION ? R.drawable.background_selected : R.drawable.background_normal);
 		updateValueText();
 		if (mDrawerLayout != null)
 			mDrawerLayout.closeDrawers();
-		if (newType != MeasureType.Area) {
+		if (newType != MeasureType.AREA) {
 			if (areaOverlay != null)
 				areaOverlay.remove();
 		}
@@ -648,4 +731,29 @@ public class Map extends FragmentActivity {
 		return false;
 	}
 
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		if (mService != null) {
+			unbindService(mServiceConn);
+		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == 42 && resultCode == RESULT_OK) {
+			if (data.getIntExtra("RESPONSE_CODE", 0) == 0) {
+				try {
+					JSONObject jo = new JSONObject(data.getStringExtra("INAPP_PURCHASE_DATA"));
+					PRO_VERSION = jo.getString("productId").equals("de.j4velin.mapsmeasure.pro")
+							&& jo.getString("developerPayload").equals(getPackageName());
+					getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("pro", PRO_VERSION).commit();
+					changeType(MeasureType.ELEVATION);
+				} catch (Exception e) {
+					Toast.makeText(this, e.getClass().getName() + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }

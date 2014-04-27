@@ -6,6 +6,7 @@
     <string name="section_mapview">Ansicht</string>
     <string name="measure_distance">Distanz</string>
     <string name="measure_area">Fläche</string>
+    <string name="measure_elevation">Höhenmeter</string>
     <string name="mapview_map">Karte</string>
     <string name="mapview_satellite">Satellit</string>
     <string name="metric">Metrische Einheiten</string>
@@ -24,5 +25,8 @@
     <string name="error">Fehler: %s</string>
     <string name="select_file">Datei wählen</string>
     <string name="no_files_found">Keine Dateien in %s gefunden</string>
+    <string name="elevation_error">Fehler beim Verbinden mit der Google Elevation API: Server momentan nicht erreichbar oder tägliches Abfragelimit erreicht</string>
+    <string name="elevation_error_no_connection">Keine Internetverbindung: Die App benötigt Höhendaten von den Google Elevation API Servern um Höhendifferenzen berechnen zu können, daher wird für diese Funktion eine Internetverbindung benötigt</string>
+    <string name="buy_pro">Diese Funktion ist momentan nicht in der kostenlosen Version der App verfügbar. Jetzt auf die Pro-Version upgraden?</string>
 
 </resources>

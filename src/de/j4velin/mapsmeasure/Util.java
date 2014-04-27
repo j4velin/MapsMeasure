@@ -21,22 +21,36 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.util.Pair;
 import android.util.TypedValue;
 
 public class Util {
 
+	private static HashMap<LatLng, Float> elevationCache;
+
 	// from
 	// http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
-	public static int getStatusBarHeight(final Context c) {
+	static int getStatusBarHeight(final Context c) {
 		int result = 0;
 		int resourceId = c.getResources().getIdentifier("status_bar_height", "dimen", "android");
 		if (resourceId > 0) {
@@ -45,7 +59,7 @@ public class Util {
 		return result;
 	}
 
-	public static int dpToPx(final Context c, int dp) {
+	static int dpToPx(final Context c, int dp) {
 		return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, c.getResources().getDisplayMetrics());
 	}
 
@@ -103,6 +117,93 @@ public class Util {
 		for (int i = 0; i < list.size(); i++) {
 			m.addPoint(list.get(i));
 		}
+	}
+
+	/**
+	 * Calculates the up- & downwards elevation along the passed trace.
+	 * 
+	 * This method might need to connect to the Google Elevation API and
+	 * therefore must not be called from the main UI thread.
+	 * 
+	 * @param trace
+	 * @return null if an error occurs, a pair of two float values otherwise:
+	 *         first one is the upwards elevation, second one downwards
+	 * 
+	 *         based on
+	 *         http://stackoverflow.com/questions/1995998/android-get-altitude
+	 *         -by-longitude-and-latitude
+	 */
+	static Pair<Float, Float> getElevation(final List<LatLng> trace) {
+		if (trace.size() < 2) {
+			return new Pair<Float, Float>(0f, 0f);
+		}
+		if (elevationCache == null) {
+			elevationCache = new HashMap<LatLng, Float>(trace.size() + 10);
+		}
+		float up = 0, down = 0;
+		float lastElevation = Float.MIN_VALUE, currentElevation;
+		HttpClient httpClient = new DefaultHttpClient();
+		HttpContext localContext = new BasicHttpContext();
+		float difference;
+		try {
+			for (LatLng p : trace) {
+				currentElevation = Float.MIN_VALUE;
+				// only query for data if we don't know it already
+				if (!elevationCache.containsKey(p)) {
+					String url = "http://maps.googleapis.com/maps/api/elevation/xml?locations=" + String.valueOf(p.latitude)
+							+ "," + String.valueOf(p.longitude) + "&sensor=true";
+					HttpGet httpGet = new HttpGet(url);
+					HttpResponse response = httpClient.execute(httpGet, localContext);
+					HttpEntity entity = response.getEntity();
+					if (entity != null) {
+						InputStream instream = entity.getContent();
+						int r = -1;
+						StringBuffer respStr = new StringBuffer();
+						while ((r = instream.read()) != -1)
+							respStr.append((char) r);
+						String tagOpen = "<elevation>";
+						String tagClose = "</elevation>";
+						if (respStr.indexOf(tagOpen) != -1) {
+							int start = respStr.indexOf(tagOpen) + tagOpen.length();
+							int end = respStr.indexOf(tagClose);
+							currentElevation = Float.parseFloat(respStr.substring(start, end));
+							elevationCache.put(p, currentElevation);
+						}
+						instream.close();
+					}
+				} else {
+					currentElevation = elevationCache.get(p);
+				}
+
+				// current and last point have a valid elevation data ->
+				// calculate difference
+				if (currentElevation > Float.MIN_VALUE && lastElevation > Float.MIN_VALUE) {
+					difference = currentElevation - lastElevation;
+					if (difference > 0)
+						up += difference;
+					else
+						down += difference;
+				}
+				lastElevation = currentElevation;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		return new Pair<Float, Float>(up, down);
+	}
+
+	/**
+	 * Tests for an internet connection.
+	 * 
+	 * @param context
+	 * @return true, if connected to the internet
+	 */
+	static boolean checkInternetConnection(final Context context) {
+		final ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		// test for connection
+		return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isAvailable()
+				&& cm.getActiveNetworkInfo().isConnected();
 	}
 
 }

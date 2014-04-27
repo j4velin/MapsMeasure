@@ -19,15 +19,17 @@ package de.j4velin.mapsmeasure;
 import java.io.File;
 import java.io.IOException;
 import java.util.Stack;
-
+import com.android.vending.billing.IInAppBillingService;
 import com.google.android.gms.maps.model.LatLng;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.v4.content.FileProvider;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
@@ -118,7 +120,7 @@ public class Dialogs {
 					}
 				} else {
 					AlertDialog.Builder b = new AlertDialog.Builder(c);
-					b.setTitle(R.string.select_file);		
+					b.setTitle(R.string.select_file);
 					final DeleteAdapter da = new DeleteAdapter(files, (Map) c);
 					b.setAdapter(da, new DialogInterface.OnClickListener() {
 						@Override
@@ -190,8 +192,8 @@ public class Dialogs {
 				+ Map.formatter_two_dec.format(distance / 1000) + " km\n\n"
 				+ Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft\n"
 				+ Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)) + " yd\n"
-				+ Map.formatter_two_dec.format(distance / 1609.344f) + " mi\n"
-				+ Map.formatter_two_dec.format(distance / 1852f) + " nautical miles");
+				+ Map.formatter_two_dec.format(distance / 1609.344f) + " mi\n" + Map.formatter_two_dec.format(distance / 1852f)
+				+ " nautical miles");
 
 		((TextView) d.findViewById(R.id.area)).setText(Map.formatter_two_dec.format(Math.max(0, area)) + " m²\n"
 				+ Map.formatter_two_dec.format(area / 10000) + " ha\n" + Map.formatter_two_dec.format(area / 1000000)
@@ -206,4 +208,59 @@ public class Dialogs {
 		});
 		return d;
 	}
+
+	/**
+	 * @param c
+	 *            the Context
+	 * @return a dialog informing the user about an issue with getting altitude
+	 *         data from the Google API
+	 */
+	public static Dialog getElevationErrorDialog(final Context c) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(c);
+		builder.setTitle(R.string.error);
+		builder.setMessage(Util.checkInternetConnection(c) ? R.string.elevation_error : R.string.elevation_error_no_connection);
+		builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(final DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		return builder.create();
+	}
+
+	/**
+	 * @param c
+	 *            the Context
+	 * @return a dialog allowing the user to gain access to the evelation
+	 *         feature
+	 */
+	public static Dialog getElevationAccessDialog(final Map c, final IInAppBillingService service) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(c);
+		builder.setMessage(R.string.buy_pro);
+		builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(final DialogInterface dialog, int which) {
+				try {
+					Bundle buyIntentBundle = service.getBuyIntent(3, c.getPackageName(), "de.j4velin.mapsmeasure.billing.pro",
+							"inapp", c.getPackageName());
+					if (buyIntentBundle.getInt("RESPONSE_CODE") == 0) {
+						PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+						c.startIntentSenderForResult(pendingIntent.getIntentSender(), 42, null, 0, 0, 0);
+					}
+				} catch (Exception e) {
+					Toast.makeText(c, e.getClass().getName() + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+					e.printStackTrace();
+				}
+				dialog.dismiss();
+			}
+		});
+		builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(final DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		return builder.create();
+	}
+
 }
