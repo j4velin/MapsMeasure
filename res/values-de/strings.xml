@@ -21,12 +21,14 @@
     <string name="save">Speichern</string>
     <string name="load">Laden</string>
     <string name="share">Teilen</string>
-    <string name="file_saved_to">Datei gespeichert in %s</string>
+    <string name="file_saved">Datei gespeichert</string>
     <string name="error">Fehler: %s</string>
     <string name="select_file">Datei wählen</string>
     <string name="no_files_found">Keine Dateien in %s gefunden</string>
     <string name="elevation_error">Fehler beim Verbinden mit der Google Elevation API: Server momentan nicht erreichbar oder tägliches Abfragelimit erreicht</string>
     <string name="elevation_error_no_connection">Keine Internetverbindung: Die App benötigt Höhendaten von den Google Elevation API Servern um Höhendifferenzen berechnen zu können, daher wird für diese Funktion eine Internetverbindung benötigt</string>
     <string name="buy_pro">Diese Funktion ist momentan nicht in der kostenlosen Version der App verfügbar. Jetzt auf die Pro-Version upgraden?</string>
-
+    <string name="file_name">Dateiname (optional)</string>
+    <string name="file_path">Datei wird hier gespeichert: %s</string>
+    
 </resources>

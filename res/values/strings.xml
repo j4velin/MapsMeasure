@@ -21,12 +21,14 @@
     <string name="save">Save</string>
     <string name="load">Load</string>
     <string name="share">Share</string>
-    <string name="file_saved_to">File saved to %s</string>
+    <string name="file_saved">File saved</string>
     <string name="error">Error: %s</string>
     <string name="select_file">Select file</string>
     <string name="no_files_found">No files found in %s</string>
     <string name="elevation_error">There was an error connecting to the Google Evelation API: Server currently not available or daily request limit reached</string>
     <string name="elevation_error_no_connection">No internet connection: The app needs to query the Google Evelation API to get altitude data and therefore requires an active internet connection to calculate evelation data</string>
     <string name="buy_pro">This feature is currently not available in the free version of the app. Do you want to upgrade to the pro version now?</string>
+    <string name="file_name">File name (optional)</string>
+    <string name="file_path">File will be saved here: %s</string>
 
 </resources>

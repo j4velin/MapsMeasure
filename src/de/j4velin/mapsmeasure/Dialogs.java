@@ -19,8 +19,12 @@ package de.j4velin.mapsmeasure;
 import java.io.File;
 import java.io.IOException;
 import java.util.Stack;
+
 import com.android.vending.billing.IInAppBillingService;
 import com.google.android.gms.maps.model.LatLng;
+
+import de.j4velin.mapsmeasure.wrapper.API8Wrapper;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
@@ -30,6 +34,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.content.FileProvider;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
@@ -37,6 +42,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -82,29 +88,64 @@ public class Dialogs {
 	 *            the current trace of points
 	 * @return the "save & share" dialog
 	 */
-	public static Dialog getSaveNShare(final Context c, final Stack<LatLng> trace) {
+	public static Dialog getSaveNShare(final Activity c, final Stack<LatLng> trace) {
 		final Dialog d = new Dialog(c);
 		d.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		d.setContentView(R.layout.dialog_save);
 		d.findViewById(R.id.save).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				try {
-					final File f = new File(c.getDir("traces", Context.MODE_PRIVATE), "MapsMeasure_" + System.currentTimeMillis()
-							+ ".csv");
-					Util.saveToFile(f, trace);
-					d.dismiss();
-					Toast.makeText(c, c.getString(R.string.file_saved_to, f.getAbsolutePath()), Toast.LENGTH_LONG).show();
-				} catch (Exception e) {
-					Toast.makeText(c, c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
-							Toast.LENGTH_LONG).show();
+				final File destination;
+				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO
+						&& Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+					destination = API8Wrapper.getExternalFilesDir(c);
+				} else {
+					destination = c.getDir("traces", Context.MODE_PRIVATE);
 				}
+
+				d.dismiss();
+				AlertDialog.Builder b = new AlertDialog.Builder(c);
+				b.setTitle(R.string.save);
+				final View layout = c.getLayoutInflater().inflate(R.layout.dialog_enter_filename, null);
+				((TextView) layout.findViewById(R.id.location)).setText(c.getString(R.string.file_path,
+						destination.getAbsolutePath() + "/"));
+				b.setView(layout);
+				b.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						try {
+							String fname = ((EditText) layout.findViewById(R.id.filename)).getText().toString();
+							if (fname == null || fname.length() < 1) {
+								fname = "MapsMeasure_" + System.currentTimeMillis();
+							}
+							final File f = new File(destination, fname + ".csv");
+							Util.saveToFile(f, trace);
+							d.dismiss();
+							Toast.makeText(c, c.getString(R.string.file_saved, f.getAbsolutePath()), Toast.LENGTH_SHORT).show();
+						} catch (Exception e) {
+							Toast.makeText(c, c.getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
+									Toast.LENGTH_LONG).show();
+						}
+					}
+				});
+				b.create().show();
 			}
 		});
 		d.findViewById(R.id.load).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				final File[] files = c.getDir("traces", Context.MODE_PRIVATE).listFiles();
+
+				File[] files = c.getDir("traces", Context.MODE_PRIVATE).listFiles();
+
+				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO
+						&& Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+					File[] filesExtern = API8Wrapper.getExternalFilesDir(c).listFiles();
+					File[] allFiles = new File[files.length + filesExtern.length];
+					System.arraycopy(files, 0, allFiles, 0, files.length);
+					System.arraycopy(filesExtern, 0, allFiles, files.length, filesExtern.length);
+					files = allFiles;
+				}
+
 				if (files.length == 0) {
 					Toast.makeText(c,
 							c.getString(R.string.no_files_found, c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
@@ -119,6 +160,7 @@ public class Dialogs {
 								Toast.LENGTH_LONG).show();
 					}
 				} else {
+					d.dismiss();
 					AlertDialog.Builder b = new AlertDialog.Builder(c);
 					b.setTitle(R.string.select_file);
 					final DeleteAdapter da = new DeleteAdapter(files, (Map) c);
@@ -137,7 +179,6 @@ public class Dialogs {
 						}
 					});
 					b.create().show();
-					d.dismiss();
 				}
 			}
 		});

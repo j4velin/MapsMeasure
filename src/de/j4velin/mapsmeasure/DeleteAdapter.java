@@ -96,10 +96,14 @@ public class DeleteAdapter extends BaseAdapter {
 			holder = (ViewHolder) convertView.getTag();
 		}
 		String filename = files.get(position).getName();
-		try {
-			Date date = new Date(Long.parseLong(filename.substring(filename.lastIndexOf("_") + 1, filename.lastIndexOf("."))));
-			filename = date.toLocaleString();
-		} catch (NumberFormatException nfe) {
+		if (filename.startsWith("MapsMeasure_")) {
+			try {
+				Date date = new Date(Long.parseLong(filename.substring(filename.lastIndexOf("_") + 1, filename.lastIndexOf("."))));
+				filename = date.toLocaleString();
+			} catch (NumberFormatException nfe) {
+			}
+		} else {
+			filename = filename.substring(0, filename.lastIndexOf("."));
 		}
 		holder.tv.setText(filename);
 		holder.iv.setTag(position);
