@@ -402,7 +402,8 @@ public class Map extends FragmentActivity {
 		if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
 			try {
 				Util.loadFromFile(getIntent().getData(), this);
-				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(trace.peek(), 16));
+				if (!trace.isEmpty())
+					mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(trace.peek(), 16));
 			} catch (IOException e) {
 				Toast.makeText(this, getString(R.string.error, e.getClass().getSimpleName() + "\n" + e.getMessage()),
 						Toast.LENGTH_LONG).show();
