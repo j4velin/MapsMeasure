@@ -217,6 +217,18 @@ public class Map extends FragmentActivity {
 						.format(altitude.first / 0.3048f)
 						+ " ft\u2B06"
 						+ formatter_two_dec.format(-1 * altitude.second / 0.3048f) + " ft\u2B07";
+				if (!trace.isEmpty()) {
+					try {
+						float lastPoint = Util.getAltitude(trace.peek(), null, null);
+						if (lastPoint > -Float.MAX_VALUE) {
+							re += "\n"
+									+ (metric ? formatter_two_dec.format(lastPoint) + " m" : formatter_two_dec
+											.format(lastPoint / 0.3048f) + " ft");
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
 				altitude = null;
 				return re;
 			}
@@ -271,7 +283,7 @@ public class Map extends FragmentActivity {
 			lines.push(mMap.addPolyline(new PolylineOptions().color(COLOR_LINE).width(LINE_WIDTH).add(trace.peek()).add(p)));
 			distance += SphericalUtil.computeDistanceBetween(p, trace.peek());
 		}
-		points.push(drawCircle(p));
+		points.push(drawMarker(p));
 		trace.push(p);
 		updateValueText();
 	}
@@ -616,7 +628,7 @@ public class Map extends FragmentActivity {
 			}
 		});
 
-		PRO_VERSION = prefs.getBoolean("pro", false);
+		PRO_VERSION = PRO_VERSION ? true : prefs.getBoolean("pro", false);
 		if (!PRO_VERSION) {
 			bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn,
 					Context.BIND_AUTO_CREATE);
@@ -664,7 +676,7 @@ public class Map extends FragmentActivity {
 	}
 
 	/**
-	 * Draws a circle at the given point.
+	 * Draws a marker at the given point.
 	 * 
 	 * Should be called when the users touches the map and adds an entry to the
 	 * stacks
@@ -673,7 +685,7 @@ public class Map extends FragmentActivity {
 	 *            the point where the user clicked
 	 * @return the drawn Polygon
 	 */
-	private Marker drawCircle(final LatLng center) {
+	private Marker drawMarker(final LatLng center) {
 		return mMap.addMarker(new MarkerOptions().position(center).flat(true).anchor(0.5f, 0.5f).icon(marker));
 	}
 

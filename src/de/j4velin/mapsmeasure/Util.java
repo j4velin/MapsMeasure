@@ -120,6 +120,54 @@ public class Util {
 	}
 
 	/**
+	 * Get the altitude data for a specific point
+	 * 
+	 * @param p
+	 *            the point to get the altitude for
+	 * @param httpClient
+	 *            can be null if no network query should be performed
+	 * @param localContext
+	 *            can be null if no network query should be performed
+	 * @return the altitude at point p or -Float.MAX_VALUE if no valid data
+	 *         could be fetched
+	 * @throws IOException
+	 */
+	static float getAltitude(final LatLng p, final HttpClient httpClient, final HttpContext localContext) throws IOException {
+		if (elevationCache == null) {
+			elevationCache = new HashMap<LatLng, Float>(30);
+		}
+		if (elevationCache.containsKey(p)) {
+			return elevationCache.get(p);
+		} else if (httpClient != null && localContext != null) {
+			float altitude = -Float.MAX_VALUE;
+			String url = "http://maps.googleapis.com/maps/api/elevation/xml?locations=" + String.valueOf(p.latitude) + ","
+					+ String.valueOf(p.longitude) + "&sensor=true";
+			HttpGet httpGet = new HttpGet(url);
+			HttpResponse response = httpClient.execute(httpGet, localContext);
+			HttpEntity entity = response.getEntity();
+			if (entity != null) {
+				InputStream instream = entity.getContent();
+				int r = -1;
+				StringBuffer respStr = new StringBuffer();
+				while ((r = instream.read()) != -1)
+					respStr.append((char) r);
+				String tagOpen = "<elevation>";
+				String tagClose = "</elevation>";
+				if (respStr.indexOf(tagOpen) != -1) {
+					int start = respStr.indexOf(tagOpen) + tagOpen.length();
+					int end = respStr.indexOf(tagClose);
+					altitude = Float.parseFloat(respStr.substring(start, end));
+					elevationCache.put(p, altitude);
+				}
+				instream.close();
+			}
+			return altitude;
+		} else {
+			return elevationCache.get(p);
+		}
+	}
+
+	/**
 	 * Calculates the up- & downwards elevation along the passed trace.
 	 * 
 	 * This method might need to connect to the Google Elevation API and
@@ -134,50 +182,18 @@ public class Util {
 	 *         -by-longitude-and-latitude
 	 */
 	static Pair<Float, Float> getElevation(final List<LatLng> trace) {
-		if (trace.size() < 2) {
-			return new Pair<Float, Float>(0f, 0f);
-		}
-		if (elevationCache == null) {
-			elevationCache = new HashMap<LatLng, Float>(trace.size() + 10);
-		}
 		float up = 0, down = 0;
-		float lastElevation = Float.MIN_VALUE, currentElevation;
+		float lastElevation = -Float.MAX_VALUE, currentElevation;
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpContext localContext = new BasicHttpContext();
 		float difference;
 		try {
 			for (LatLng p : trace) {
-				currentElevation = Float.MIN_VALUE;
-				// only query for data if we don't know it already
-				if (!elevationCache.containsKey(p)) {
-					String url = "http://maps.googleapis.com/maps/api/elevation/xml?locations=" + String.valueOf(p.latitude)
-							+ "," + String.valueOf(p.longitude) + "&sensor=true";
-					HttpGet httpGet = new HttpGet(url);
-					HttpResponse response = httpClient.execute(httpGet, localContext);
-					HttpEntity entity = response.getEntity();
-					if (entity != null) {
-						InputStream instream = entity.getContent();
-						int r = -1;
-						StringBuffer respStr = new StringBuffer();
-						while ((r = instream.read()) != -1)
-							respStr.append((char) r);
-						String tagOpen = "<elevation>";
-						String tagClose = "</elevation>";
-						if (respStr.indexOf(tagOpen) != -1) {
-							int start = respStr.indexOf(tagOpen) + tagOpen.length();
-							int end = respStr.indexOf(tagClose);
-							currentElevation = Float.parseFloat(respStr.substring(start, end));
-							elevationCache.put(p, currentElevation);
-						}
-						instream.close();
-					}
-				} else {
-					currentElevation = elevationCache.get(p);
-				}
+				currentElevation = getAltitude(p, httpClient, localContext);
 
 				// current and last point have a valid elevation data ->
 				// calculate difference
-				if (currentElevation > Float.MIN_VALUE && lastElevation > Float.MIN_VALUE) {
+				if (currentElevation > -Float.MAX_VALUE && lastElevation > -Float.MAX_VALUE) {
 					difference = currentElevation - lastElevation;
 					if (difference > 0)
 						up += difference;
