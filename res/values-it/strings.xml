@@ -25,7 +25,7 @@
     <string name="error">Errore: %s</string>
     <string name="select_file">Seleziona file</string>
     <string name="no_files_found">Nessun file trovato in %s</string>
-    <string name="elevation_error">C'è stato un errore connettendosi alle Google Elevation API: Server non disponibile al momento o limite di richieste giornaliero raggiunto</string>
+    <string name="elevation_error">C'è stato un errore connettendosi alle Google Elevation API: server non disponibile al momento o limite di richieste giornaliero raggiunto</string>
     <string name="elevation_error_no_connection">Nessuna connessione ad internet: questa app necessita di inviare query alle Google Elevation API per recuperare i dati di altitudine, quindi è necessaria una connessione ad internet attiva per poterli calcolare</string>
     <string name="buy_pro">Questa opzione non è attualmente disponibile nella versione gratuita dell'app. Vuoi aggiornare l'app alla versione pro adesso?</string>
     <string name="file_name">Nome del file (facoltativo)</string>
