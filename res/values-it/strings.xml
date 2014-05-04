@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Maps Measure</string>
+    <string name="section_measure">Misure</string>
+    <string name="section_mapview">Vista mappa</string>
+    <string name="measure_distance">Distanza</string>
+    <string name="measure_area">Area</string>
+    <string name="measure_elevation">Altitudine</string>
+    <string name="mapview_map">Mappa</string>
+    <string name="mapview_satellite">Satellite</string>
+    <string name="metric">Sistema metrico decimale</string>
+    <string name="about">About</string>
+    <string name="about_text">Questa app è stata creata da Thomas Hoffmann (<a href="http://www.j4velin-development.de">www.j4velin-development.de</a>) e usa le \'Google Maps API v2\'.\n\nMaps Measure è open source! Prendi il codice da <a href="https://github.com/j4velin/MapsMeasure">GitHub</a>.\n\n</string>
+    <string name="app_version">Versione app: %s</string>
+    <string name="moreapps">Altre app</string>
+    <string name="delete_all">Cancella tutti e %d i punti?</string>
+    <string name="no_location_found">Luogo non trovato</string>
+    <string name="units">Unità di misura</string>
+    <string name="savenshare">Salva &amp; condividi</string>
+    <string name="save">Salva</string>
+    <string name="load">Carica</string>
+    <string name="share">Condividi</string>
+    <string name="file_saved">File salvato</string>
+    <string name="error">Errore: %s</string>
+    <string name="select_file">Seleziona file</string>
+    <string name="no_files_found">Nessun file trovato in %s</string>
+    <string name="elevation_error">C'è stato un errore connettendosi alle Google Elevation API: Server non disponibile al momento o limite di richieste giornaliero raggiunto</string>
+    <string name="elevation_error_no_connection">Nessuna connessione ad internet: questa app necessita di inviare query alle Google Elevation API per recuperare i dati di altitudine, quindi è necessaria una connessione ad internet attiva per poterli calcolare</string>
+    <string name="buy_pro">Questa opzione non è attualmente disponibile nella versione gratuita dell'app. Vuoi aggiornare l'app alla versione pro adesso?</string>
+    <string name="file_name">Nome del file (facoltativo)</string>
+    <string name="file_path">Il file verrà salvato qui: %s</string>
+
+</resources>
