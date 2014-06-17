@@ -561,19 +561,25 @@ public class Map extends FragmentActivity {
 			}
 		});
 
-		toggleSatelliteView(prefs.getBoolean("satellite", false));
+		changeView(prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
 		changeType(MeasureType.DISTANCE);
 
 		findViewById(R.id.mapview_map).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				toggleSatelliteView(false);
+				changeView(GoogleMap.MAP_TYPE_NORMAL);
 			}
 		});
 		findViewById(R.id.mapview_satellite).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
-				toggleSatelliteView(true);
+				changeView(GoogleMap.MAP_TYPE_HYBRID);
+			}
+		});
+		findViewById(R.id.mapview_terrain).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(final View v) {
+				changeView(GoogleMap.MAP_TYPE_TERRAIN);
 			}
 		});
 		findViewById(R.id.measure_area).setOnClickListener(new OnClickListener() {
@@ -659,20 +665,23 @@ public class Map extends FragmentActivity {
 	}
 
 	/**
-	 * Change between normal map and satellite hybrid view
+	 * Change between normal map, satellite hybrid and terrain view
 	 * 
-	 * @param enable
-	 *            true to switch to hybrid view
+	 * @param newView
+	 *            the new view, should be one of GoogleMap.MAP_TYPE_NORMAL,
+	 *            GoogleMap.MAP_TYPE_HYBRID or GoogleMap.MAP_TYPE_TERRAIN
 	 */
-	private void toggleSatelliteView(boolean enable) {
-		mMap.setMapType(enable ? GoogleMap.MAP_TYPE_HYBRID : GoogleMap.MAP_TYPE_NORMAL);
+	private void changeView(int newView) {
+		mMap.setMapType(newView);
 		findViewById(R.id.mapview_satellite).setBackgroundResource(
-				enable ? R.drawable.background_selected : R.drawable.background_normal);
+				newView == GoogleMap.MAP_TYPE_HYBRID ? R.drawable.background_selected : R.drawable.background_normal);
 		findViewById(R.id.mapview_map).setBackgroundResource(
-				enable ? R.drawable.background_normal : R.drawable.background_selected);
+				newView == GoogleMap.MAP_TYPE_NORMAL ? R.drawable.background_selected : R.drawable.background_normal);
+		findViewById(R.id.mapview_terrain).setBackgroundResource(
+				newView == GoogleMap.MAP_TYPE_TERRAIN ? R.drawable.background_selected : R.drawable.background_normal);
 		if (mDrawerLayout != null)
 			mDrawerLayout.closeDrawers();
-		getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("satellite", enable).commit();
+		getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putInt("mapView", newView).commit();
 	}
 
 	/**

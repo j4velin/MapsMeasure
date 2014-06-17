@@ -146,6 +146,17 @@
                 android:textAppearance="?android:textAppearanceMedium"
                 android:textColor="#000" />
 
+            <TextView
+                android:id="@+id/mapview_terrain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_mapview_terrain"
+                android:drawablePadding="5dp"
+                android:gravity="center_vertical"
+                android:text="@string/mapview_terrain"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="#000" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dip"

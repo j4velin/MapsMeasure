@@ -9,6 +9,7 @@
     <string name="measure_elevation">Höhenmeter</string>
     <string name="mapview_map">Karte</string>
     <string name="mapview_satellite">Satellit</string>
+    <string name="mapview_terrain">Terrain</string>
     <string name="metric">Metrische Einheiten</string>
     <string name="about">Info</string>
     <string name="about_text">Diese App wurde von Thomas Hoffmann (<a href="http://www.j4velin-development.de">www.j4velin-development.de</a>) erstellt und verwendet die \'Google Maps API v2\'.\n\nMaps Measure ist Open Source! Der Quellcode ist auf <a href="https://github.com/j4velin/MapsMeasure">GitHub</a> verfügbar.\n\n</string>
