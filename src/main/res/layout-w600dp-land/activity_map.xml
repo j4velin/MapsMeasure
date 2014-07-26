@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="de.j4velin.mapsmeasure.Map" >
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context="de.j4velin.mapsmeasure.Map">
 
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
     <LinearLayout
         android:id="@+id/topCenterOverlay"
@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_margin="10dp"
-        android:background="@drawable/value_background" >
+        android:background="@drawable/value_background">
 
         <TextView
             android:id="@+id/distance"
@@ -25,15 +25,16 @@
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:textAppearance="?android:textAppearanceMedium"
-            android:textColor="#666" />
+            android:textColor="#666"/>
 
         <ImageView
+            android:contentDescription="@string/delete"
             android:id="@+id/delete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:paddingRight="10dp"
-            android:src="@drawable/ic_action_delete" />
+            android:src="@drawable/ic_action_delete"/>
     </LinearLayout>
 
     <ScrollView
@@ -43,12 +44,12 @@
         android:layout_gravity="start"
         android:background="#cccccccc"
         android:fillViewport="true"
-        android:padding="10dp" >
+        android:padding="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <EditText
                 android:id="@+id/search"
@@ -61,7 +62,7 @@
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 style="?android:attr/listSeparatorTextViewStyle"
@@ -69,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="@string/section_measure"
-                android:textColor="#666" />
+                android:textColor="#666"/>
 
             <TextView
                 android:id="@+id/metric"
@@ -81,7 +82,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/units"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/measure_distance"
@@ -92,7 +93,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/measure_distance"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/measure_area"
@@ -103,7 +104,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/measure_area"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/measure_elevation"
@@ -114,7 +115,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/measure_elevation"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 style="?android:attr/listSeparatorTextViewStyle"
@@ -122,7 +123,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="@string/section_mapview"
-                android:textColor="#666" />
+                android:textColor="#666"/>
 
             <TextView
                 android:id="@+id/mapview_map"
@@ -133,7 +134,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/mapview_map"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/mapview_satellite"
@@ -144,7 +145,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/mapview_satellite"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/mapview_terrain"
@@ -155,13 +156,13 @@
                 android:gravity="center_vertical"
                 android:text="@string/mapview_terrain"
                 android:textAppearance="?android:textAppearanceMedium"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dip"
                 android:layout_weight="1"
-                android:minHeight="20dp" />
+                android:minHeight="20dp"/>
 
             <TextView
                 android:id="@+id/savenshare"
@@ -174,7 +175,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/savenshare"
                 android:textAppearance="?android:textAppearanceSmall"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/moreapps"
@@ -187,7 +188,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/moreapps"
                 android:textAppearance="?android:textAppearanceSmall"
-                android:textColor="#000" />
+                android:textColor="#000"/>
 
             <TextView
                 android:id="@+id/about"
@@ -199,7 +200,7 @@
                 android:gravity="center_vertical"
                 android:text="@string/about"
                 android:textAppearance="?android:textAppearanceSmall"
-                android:textColor="#000" />
+                android:textColor="#000"/>
         </LinearLayout>
     </ScrollView>
 

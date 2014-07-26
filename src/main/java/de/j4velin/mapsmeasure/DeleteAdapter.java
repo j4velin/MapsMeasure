@@ -16,11 +16,6 @@
 
 package de.j4velin.mapsmeasure;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -28,11 +23,16 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+
 /**
  * Class for showing a list of saved traces and the ability to delete them
  * 
  */
-public class DeleteAdapter extends BaseAdapter {
+class DeleteAdapter extends BaseAdapter {
 
 	private final ArrayList<File> files;
 	private final LayoutInflater mInflater;

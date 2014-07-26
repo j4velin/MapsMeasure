@@ -1,4 +1,4 @@
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 19
@@ -20,6 +20,11 @@ android {
             runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
             zipAlign true
+        }
+        debug {
+            signingConfig signingConfigs.release
+            runProguard false
+            debuggable true
         }
     }
 }

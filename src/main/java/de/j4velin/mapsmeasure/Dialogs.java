@@ -16,14 +16,6 @@
 
 package de.j4velin.mapsmeasure;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Stack;
-
-import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.maps.model.LatLng;
-
-import de.j4velin.mapsmeasure.wrapper.API8Wrapper;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -42,12 +34,21 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class Dialogs {
+import com.android.vending.billing.IInAppBillingService;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Stack;
+
+import de.j4velin.mapsmeasure.wrapper.API8Wrapper;
+
+class Dialogs {
 
 	/**
 	 * @param c

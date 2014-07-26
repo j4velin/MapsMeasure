@@ -16,35 +16,6 @@
 
 package de.j4velin.mapsmeasure;
 
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Stack;
-
-import org.json.JSONObject;
-
-import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.maps.android.SphericalUtil;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -84,23 +55,52 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.TextView.OnEditorActionListener;
+import android.widget.Toast;
+
+import com.android.vending.billing.IInAppBillingService;
+import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.SphericalUtil;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Stack;
 
 public class Map extends FragmentActivity {
 
 	private static enum MeasureType {
 		DISTANCE, AREA, ELEVATION
-	};
+	}
 
 	// the map to draw to
 	private GoogleMap mMap;
 	private DrawerLayout mDrawerLayout;
 
 	// the stacks - everytime the user touches the map, an entry is pushed
-	private Stack<LatLng> trace = new Stack<LatLng>();
-	private Stack<Polyline> lines = new Stack<Polyline>();
-	private Stack<Marker> points = new Stack<Marker>();
+	private final Stack<LatLng> trace = new Stack<LatLng>();
+	private final Stack<Polyline> lines = new Stack<Polyline>();
+	private final Stack<Marker> points = new Stack<Marker>();
 
 	private Polygon areaOverlay;
 
@@ -113,7 +113,7 @@ public class Map extends FragmentActivity {
 	private final static float LINE_WIDTH = 5f;
 
 	final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
-	final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
+	private final static NumberFormat formatter_no_dec = NumberFormat.getInstance(Locale.getDefault());
 
 	boolean metric; // display in metric units
 
@@ -124,7 +124,7 @@ public class Map extends FragmentActivity {
 	private IInAppBillingService mService;
 	private static boolean PRO_VERSION = false;
 
-	ServiceConnection mServiceConn = new ServiceConnection() {
+	private final ServiceConnection mServiceConn = new ServiceConnection() {
 		@Override
 		public void onServiceDisconnected(final ComponentName name) {
 			mService = null;
@@ -634,7 +634,7 @@ public class Map extends FragmentActivity {
 			}
 		});
 
-		PRO_VERSION = PRO_VERSION ? true : prefs.getBoolean("pro", false);
+		PRO_VERSION |= prefs.getBoolean("pro", false);
 		if (!PRO_VERSION) {
 			bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn,
 					Context.BIND_AUTO_CREATE);
