@@ -87,6 +87,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 
+import de.j4velin.mapsmeasure.wrapper.API17Wrapper;
+
 public class Map extends FragmentActivity {
 
 	private static enum MeasureType {
@@ -508,7 +510,7 @@ public class Map extends FragmentActivity {
 			total = new DisplayMetrics();
 			available = new DisplayMetrics();
 			getWindowManager().getDefaultDisplay().getMetrics(available);
-			getWindowManager().getDefaultDisplay().getRealMetrics(total);
+            API17Wrapper.getRealMetrics(getWindowManager().getDefaultDisplay(), total);
 
 			// on most devices and in most orientations, the navigation bar
 			// should be at the bottom and therefore reduces the available
