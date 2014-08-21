@@ -28,6 +28,7 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -151,11 +152,11 @@ public class Map extends FragmentActivity {
 
 	/**
 	 * Get the formatted string for the valueTextView.
-	 * 
+	 *
 	 * Depending on whether 'showArea' is set, the returned string shows the
 	 * distance of the trace or the area between them. If 'showArea' is set,
 	 * this call might be expensive as the area is computed here and not cached.
-	 * 
+	 *
 	 * @return the formatted text for the valueTextView
 	 */
 	private String getFormattedString() {
@@ -276,7 +277,7 @@ public class Map extends FragmentActivity {
 	/**
 	 * Adds a new point, calculates the new distance and draws the point and a
 	 * line to it
-	 * 
+	 *
 	 * @param p
 	 *            the new point
 	 */
@@ -332,7 +333,22 @@ public class Map extends FragmentActivity {
 
 		final SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
 
-		// use metric a the default everywhere, except in the US
+        // app of the day promo
+        try {
+            long installDate =
+                    getPackageManager().getPackageInfo(getPackageName(), 0).firstInstallTime;
+            // 11 am, 12. Sep: 1410512400
+            // 7 pm, 14. Sep: 1410714000
+            if (installDate >= 1410512400000l && installDate <= 1410714000000l) {
+                prefs.edit().putBoolean("pro", true).commit();
+                PRO_VERSION = true;
+                Toast.makeText(this, "Elevation feature unlocked, thanks to App of the Day", Toast.LENGTH_SHORT).show();
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+
+
+        // use metric a the default everywhere, except in the US
 		metric = prefs.getBoolean("metric", !Locale.getDefault().equals(Locale.US));
 
 		final View topCenterOverlay = findViewById(R.id.topCenterOverlay);
@@ -645,7 +661,7 @@ public class Map extends FragmentActivity {
 
 	/**
 	 * Change the "type" of measuring: Distance, Area or Altitude
-	 * 
+	 *
 	 * @param newType
 	 *            the type to change to
 	 */
@@ -668,7 +684,7 @@ public class Map extends FragmentActivity {
 
 	/**
 	 * Change between normal map, satellite hybrid and terrain view
-	 * 
+	 *
 	 * @param newView
 	 *            the new view, should be one of GoogleMap.MAP_TYPE_NORMAL,
 	 *            GoogleMap.MAP_TYPE_HYBRID or GoogleMap.MAP_TYPE_TERRAIN
@@ -688,10 +704,10 @@ public class Map extends FragmentActivity {
 
 	/**
 	 * Draws a marker at the given point.
-	 * 
+	 *
 	 * Should be called when the users touches the map and adds an entry to the
 	 * stacks
-	 * 
+	 *
 	 * @param center
 	 *            the point where the user clicked
 	 * @return the drawn Polygon
@@ -701,13 +717,13 @@ public class Map extends FragmentActivity {
 	}
 
 	/**
-	 * 
+	 *
 	 * Based on
 	 * http://wptrafficanalyzer.in/blog/android-geocoding-showing-user-input
 	 * -location-on-google-map-android-api-v2/
-	 * 
+	 *
 	 * @author George Mathew
-	 * 
+	 *
 	 */
 	private class GeocoderTask extends AsyncTask<String, Void, Address> {
 
