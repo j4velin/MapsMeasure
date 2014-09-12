@@ -32,7 +32,7 @@ import static java.lang.Math.toRadians;
 
 public class SphericalUtil {
 
-    private final static int EARTH_RADIUS = 6371000;
+    private final static double EARTH_RADIUS = 6371000;
 
     private SphericalUtil() {
     }
