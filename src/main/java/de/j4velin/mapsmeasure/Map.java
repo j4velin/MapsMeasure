@@ -200,6 +200,7 @@ public class Map extends FragmentActivity {
                         h.post(new Runnable() {
                             @Override
                             public void run() {
+                                if (isFinishing()) return;
                                 if (altitude == null) {
                                     Dialogs.getElevationErrorDialog(Map.this).show();
                                     changeType(MeasureType.DISTANCE);
