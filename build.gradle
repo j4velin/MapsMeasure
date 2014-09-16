@@ -16,8 +16,6 @@ android {
 
     defaultConfig {
         applicationId "de.j4velin.mapsmeasure"
-        minSdkVersion 9
-        targetSdkVersion 19
     }
 
     signingConfigs {
@@ -41,7 +39,7 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:20.+'
-    compile 'com.google.android.gms:play-services:+'
+    compile 'com.google.android.gms:play-services:5.0.89'
 }
 
 def props = new Properties()
