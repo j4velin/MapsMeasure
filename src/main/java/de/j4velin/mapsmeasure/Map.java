@@ -140,8 +140,10 @@ public class Map extends FragmentActivity {
             try {
                 Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
                 if (ownedItems.getInt("RESPONSE_CODE") == 0) {
-                    PRO_VERSION = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST")
-                            .contains("de.j4velin.mapsmeasure.billing.pro");
+                    PRO_VERSION =
+                            ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST") != null &&
+                                    ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST")
+                                            .contains("de.j4velin.mapsmeasure.billing.pro");
                     getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
                             .putBoolean("pro", PRO_VERSION).commit();
                 }
