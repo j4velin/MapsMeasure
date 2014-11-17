@@ -606,7 +606,8 @@ public class Map extends FragmentActivity {
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
             } else {
                 mMap.setPadding(0, statusbar, 0, navBarHeight);
-                drawerList.setPadding(0, statusbar + 10, 0, navBarHeight);
+                drawerList.setPadding(0, statusbar + 10, 0, 0);
+                drawerListAdapert.setMarginBottom(navBarHeight);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
             }
         }
