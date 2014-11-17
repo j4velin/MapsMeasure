@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EditText xmlns:android="http://schemas.android.com/apk/res/android"
+          android:id="@+id/search"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="10dp"
+          android:drawableLeft="@drawable/ic_search"
+          android:hint="@android:string/search_go"
+          android:imeActionLabel="@android:string/search_go"
+          android:imeOptions="actionSearch"
+          android:inputType="text"
+          android:selectAllOnFocus="true"
+          android:textAppearance="?android:textAppearanceMedium"
+          android:textColor="#000"/>

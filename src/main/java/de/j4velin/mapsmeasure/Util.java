@@ -48,8 +48,14 @@ class Util {
 
     private static HashMap<LatLng, Float> elevationCache;
 
-    // from
-    // http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
+    /**
+     * Returns the height of the status bar
+     * <p/>
+     * from http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
+     *
+     * @param c the Context
+     * @return the height of the status bar
+     */
     static int getStatusBarHeight(final Context c) {
         int result = 0;
         int resourceId = c.getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -59,6 +65,29 @@ class Util {
         return result;
     }
 
+    /**
+     * Returns the height of the navigation bar
+     *
+     * @param c the Context
+     * @return the height of the navigation bar
+     */
+    static int getNavigationBarHeight(final Context c) {
+        int result = 0;
+        int resourceId =
+                c.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = c.getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    /**
+     * Converts the given lenght in dp into pixels
+     *
+     * @param c  the Context
+     * @param dp the size in dp
+     * @return the size in px
+     */
     static int dpToPx(final Context c, int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
                 c.getResources().getDisplayMetrics());

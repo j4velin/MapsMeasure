@@ -28,13 +28,9 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
@@ -46,16 +42,14 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.DisplayMetrics;
 import android.util.Pair;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.widget.AdapterView;
 import android.widget.FrameLayout;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
@@ -91,7 +85,7 @@ import de.j4velin.mapsmeasure.wrapper.API17Wrapper;
 
 public class Map extends FragmentActivity {
 
-    private static enum MeasureType {
+    public static enum MeasureType {
         DISTANCE, AREA, ELEVATION
     }
 
@@ -128,6 +122,8 @@ public class Map extends FragmentActivity {
     private IInAppBillingService mService;
     private static boolean PRO_VERSION = false;
 
+    private DrawerListAdapter drawerListAdapert;
+
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceDisconnected(final ComponentName name) {
@@ -154,6 +150,14 @@ public class Map extends FragmentActivity {
             }
         }
     };
+
+    public GoogleMap getMap() {
+        return mMap;
+    }
+
+    public void closeDrawer() {
+        if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
+    }
 
     /**
      * Get the formatted string for the valueTextView.
@@ -503,6 +507,70 @@ public class Map extends FragmentActivity {
             }
         });
 
+        // Drawer stuff
+        ListView drawerList = (ListView) findViewById(R.id.left_drawer);
+        drawerListAdapert = new DrawerListAdapter(this);
+        drawerList.setAdapter(drawerListAdapert);
+        drawerList.setDivider(null);
+        drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(final AdapterView<?> parent, final View view, int position, long id) {
+                switch (position) {
+                    case 2: // Units
+                        Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace))
+                                .show();
+                        closeDrawer();
+                        break;
+                    case 3: // distance
+                        changeType(MeasureType.DISTANCE);
+                        break;
+                    case 4: // area
+                        changeType(MeasureType.AREA);
+                        break;
+                    case 5: // elevation
+                        if (PRO_VERSION) {
+                            changeType(MeasureType.ELEVATION);
+                        } else {
+                            Dialogs.getElevationAccessDialog(Map.this, mService).show();
+                        }
+                        break;
+                    case 7: // map
+                        changeView(GoogleMap.MAP_TYPE_NORMAL);
+                        break;
+                    case 8: // satellite
+                        changeView(GoogleMap.MAP_TYPE_HYBRID);
+                        break;
+                    case 9: // terrain
+                        changeView(GoogleMap.MAP_TYPE_TERRAIN);
+                        break;
+                    case 11: // save
+                        Dialogs.getSaveNShare(Map.this, trace).show();
+                        closeDrawer();
+                        break;
+                    case 12: // more apps
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW,
+                                    Uri.parse("market://search?q=pub:j4velin"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        } catch (ActivityNotFoundException anf) {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(
+                                    "https://play.google.com/store/apps/developer?id=j4velin"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        }
+                        break;
+                    case 13: // about
+                        Dialogs.getAbout(Map.this).show();
+                        closeDrawer();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        changeView(prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
+        changeType(MeasureType.DISTANCE);
+
         // KitKat translucent decor enabled? -> Add some margin/padding to the
         // drawer and the map
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
@@ -511,8 +579,13 @@ public class Map extends FragmentActivity {
 
             FrameLayout.LayoutParams lp =
                     (FrameLayout.LayoutParams) topCenterOverlay.getLayoutParams();
-            lp.setMargins(10, statusbar + 10, 0, 0);
+            lp.setMargins(0, statusbar + 10, 0, 0);
             topCenterOverlay.setLayoutParams(lp);
+
+            // on most devices and in most orientations, the navigation bar
+            // should be at the bottom and therefore reduces the available
+            // display height
+            int navBarHeight = Util.getNavigationBarHeight(this);
 
             DisplayMetrics total, available;
             total = new DisplayMetrics();
@@ -520,134 +593,30 @@ public class Map extends FragmentActivity {
             getWindowManager().getDefaultDisplay().getMetrics(available);
             API17Wrapper.getRealMetrics(getWindowManager().getDefaultDisplay(), total);
 
-            // on most devices and in most orientations, the navigation bar
-            // should be at the bottom and therefore reduces the available
-            // display height
-            int navBarHeight = Math.max(0,
-                    total.heightPixels - available.heightPixels - Util.getStatusBarHeight(this));
+            boolean navBarOnRight = getResources().getConfiguration().orientation ==
+                    android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
+                    (total.widthPixels - available.widthPixels > 0);
 
-            if (getResources().getConfiguration().orientation ==
-                    android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            if (navBarOnRight) {
                 // in landscape on phones, the navigation bar might be at the
                 // right side, reducing the available display width
-                int navBarWidth = total.widthPixels - available.widthPixels;
-
                 mMap.setPadding(mDrawerLayout == null ? Util.dpToPx(this, 200) : 0, statusbar,
-                        navBarWidth, navBarHeight);
-                findViewById(R.id.left_drawer).setPadding(0, statusbar + 10, 0, navBarHeight);
-                if (menuButton != null) menuButton.setPadding(0, 0, 0, 10 + navBarHeight);
+                        navBarHeight, 0);
+                drawerList.setPadding(0, statusbar + 10, 0, 0);
+                if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
             } else {
                 mMap.setPadding(0, statusbar, 0, navBarHeight);
-                findViewById(R.id.left_drawer).setPadding(0, statusbar + 10, 0, navBarHeight);
-                if (menuButton != null) menuButton.setPadding(0, 0, 0, 10 + navBarHeight);
+                drawerList.setPadding(0, statusbar + 10, 0, navBarHeight);
+                if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
             }
         }
 
         mMap.setMyLocationEnabled(true);
 
-        // Drawer stuff
-        ((EditText) findViewById(R.id.search))
-                .setOnEditorActionListener(new OnEditorActionListener() {
-                    @Override
-                    public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
-                        if (event == null || event.getAction() == KeyEvent.ACTION_DOWN) {
-                            new GeocoderTask().execute(v.getText().toString());
-                            InputMethodManager inputManager = (InputMethodManager) Map.this
-                                    .getSystemService(Context.INPUT_METHOD_SERVICE);
-                            inputManager.hideSoftInputFromWindow(
-                                    Map.this.getCurrentFocus().getWindowToken(),
-                                    InputMethodManager.HIDE_NOT_ALWAYS);
-                            if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
-                        }
-                        return true;
-                    }
-                });
-
-        final View metricTV = findViewById(R.id.metric);
-        metricTV.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace)).show();
-                if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
-            }
-        });
-
-        changeView(prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
-        changeType(MeasureType.DISTANCE);
-
-        findViewById(R.id.mapview_map).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                changeView(GoogleMap.MAP_TYPE_NORMAL);
-            }
-        });
-        findViewById(R.id.mapview_satellite).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                changeView(GoogleMap.MAP_TYPE_HYBRID);
-            }
-        });
-        findViewById(R.id.mapview_terrain).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                changeView(GoogleMap.MAP_TYPE_TERRAIN);
-            }
-        });
-        findViewById(R.id.measure_area).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                changeType(MeasureType.AREA);
-            }
-        });
-        findViewById(R.id.measure_distance).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                changeType(MeasureType.DISTANCE);
-            }
-        });
-        findViewById(R.id.measure_elevation).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                if (PRO_VERSION) {
-                    changeType(MeasureType.ELEVATION);
-                } else {
-                    Dialogs.getElevationAccessDialog(Map.this, mService).show();
-                }
-            }
-        });
-        findViewById(R.id.savenshare).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Dialogs.getSaveNShare(Map.this, trace).show();
-                if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
-            }
-        });
-        findViewById(R.id.about).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Dialogs.getAbout(Map.this).show();
-                if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
-            }
-        });
-        findViewById(R.id.moreapps).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("market://search?q=pub:j4velin"))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                } catch (ActivityNotFoundException anf) {
-                    startActivity(new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/apps/developer?id=j4velin"))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                }
-            }
-        });
-
         PRO_VERSION |= prefs.getBoolean("pro", false);
         if (!PRO_VERSION) {
-            bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"),
-                    mServiceConn, Context.BIND_AUTO_CREATE);
+            bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND")
+                    .setPackage("com.android.vending"), mServiceConn, Context.BIND_AUTO_CREATE);
         }
     }
 
@@ -658,15 +627,7 @@ public class Map extends FragmentActivity {
      */
     private void changeType(final MeasureType newType) {
         type = newType;
-        findViewById(R.id.measure_area).setBackgroundResource(
-                newType == MeasureType.AREA ? R.drawable.background_selected :
-                        R.drawable.background_normal);
-        findViewById(R.id.measure_distance).setBackgroundResource(
-                newType == MeasureType.DISTANCE ? R.drawable.background_selected :
-                        R.drawable.background_normal);
-        findViewById(R.id.measure_elevation).setBackgroundResource(
-                newType == MeasureType.ELEVATION ? R.drawable.background_selected :
-                        R.drawable.background_normal);
+        drawerListAdapert.changeType(newType);
         updateValueText();
         if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
         if (newType != MeasureType.AREA) {
@@ -682,15 +643,7 @@ public class Map extends FragmentActivity {
      */
     private void changeView(int newView) {
         mMap.setMapType(newView);
-        findViewById(R.id.mapview_satellite).setBackgroundResource(
-                newView == GoogleMap.MAP_TYPE_HYBRID ? R.drawable.background_selected :
-                        R.drawable.background_normal);
-        findViewById(R.id.mapview_map).setBackgroundResource(
-                newView == GoogleMap.MAP_TYPE_NORMAL ? R.drawable.background_selected :
-                        R.drawable.background_normal);
-        findViewById(R.id.mapview_terrain).setBackgroundResource(
-                newView == GoogleMap.MAP_TYPE_TERRAIN ? R.drawable.background_selected :
-                        R.drawable.background_normal);
+        drawerListAdapert.changeView(newView);
         if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
         getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putInt("mapView", newView)
                 .commit();
@@ -708,42 +661,6 @@ public class Map extends FragmentActivity {
     private Marker drawMarker(final LatLng center) {
         return mMap.addMarker(
                 new MarkerOptions().position(center).flat(true).anchor(0.5f, 0.5f).icon(marker));
-    }
-
-    /**
-     * Based on
-     * http://wptrafficanalyzer.in/blog/android-geocoding-showing-user-input
-     * -location-on-google-map-android-api-v2/
-     *
-     * @author George Mathew
-     */
-    private class GeocoderTask extends AsyncTask<String, Void, Address> {
-
-        @Override
-        protected Address doInBackground(final String... locationName) {
-            // Creating an instance of Geocoder class
-            Geocoder geocoder = new Geocoder(getBaseContext());
-            try {
-                // Get only the best result that matches the input text
-                List<Address> addresses = geocoder.getFromLocationName(locationName[0], 1);
-                return addresses != null && !addresses.isEmpty() ? addresses.get(0) : null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(final Address address) {
-            if (address == null) {
-                Toast.makeText(getBaseContext(), R.string.no_location_found, Toast.LENGTH_SHORT)
-                        .show();
-            } else {
-                mMap.animateCamera(CameraUpdateFactory
-                        .newLatLngZoom(new LatLng(address.getLatitude(), address.getLongitude()),
-                                Math.max(10, mMap.getCameraPosition().zoom)));
-            }
-        }
     }
 
     /**
