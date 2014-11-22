@@ -41,6 +41,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.View;
@@ -418,6 +419,23 @@ public class Map extends FragmentActivity {
             public boolean onMarkerClick(final Marker click) {
                 addPoint(click.getPosition());
                 return true;
+            }
+        });
+
+        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+                LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude());
+                double distance = SphericalUtil.computeDistanceBetween(myLocation,
+                        mMap.getCameraPosition().target);
+
+                // Only if the distance is less than 50cm we are on our location, add the marker
+                if (distance < 0.5) {
+                    Toast.makeText(Map.this, R.string.marker_on_current_location, Toast.LENGTH_SHORT).show();
+                    addPoint(myLocation);
+                }
+
+                return false;
             }
         });
 
