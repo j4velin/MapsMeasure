@@ -143,7 +143,7 @@ class Dialogs {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO &&
                         Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
                     File ext = API8Wrapper.getExternalFilesDir(c);
-                    // even though we checked the external storage state, ext is still sometims null, accoring to Play Store crash reports
+                    // even though we checked the external storage state, ext is still sometimes null, accoring to Play Store crash reports
                     if (ext != null) {
                         File[] filesExtern = ext.listFiles();
                         File[] allFiles = new File[files.length + filesExtern.length];
