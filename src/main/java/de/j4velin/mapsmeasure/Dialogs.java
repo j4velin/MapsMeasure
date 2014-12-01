@@ -32,6 +32,7 @@ import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -314,6 +315,38 @@ class Dialogs {
         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(final DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        return builder.create();
+    }
+
+    public static Dialog getSearchDialog(final Map map) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(map);
+        final EditText search = new EditText(map);
+        search.setHint(android.R.string.search_go);
+        builder.setView(search);
+        builder.setPositiveButton(android.R.string.search_go,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface dialog, int which) {
+                        new GeocoderTask(map).execute(search.getText().toString());
+                        // hide softinput keyboard
+                        InputMethodManager inputManager = (InputMethodManager) map
+                                .getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(search.getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        dialog.dismiss();
+                    }
+                });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(final DialogInterface dialog, int which) {
+                // hide softinput keyboard
+                InputMethodManager inputManager =
+                        (InputMethodManager) map.getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(search.getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
                 dialog.dismiss();
             }
         });

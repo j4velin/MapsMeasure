@@ -536,6 +536,10 @@ public class Map extends FragmentActivity {
             @Override
             public void onItemClick(final AdapterView<?> parent, final View view, int position, long id) {
                 switch (position) {
+                    case 0: // Search before Android 5.0
+                        Dialogs.getSearchDialog(Map.this).show();
+                        closeDrawer();
+                        break;
                     case 2: // Units
                         Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace))
                                 .show();
