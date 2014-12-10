@@ -273,7 +273,6 @@ class Dialogs {
      */
     public static Dialog getElevationErrorDialog(final Context c) {
         AlertDialog.Builder builder = new AlertDialog.Builder(c);
-        builder.setTitle(R.string.error);
         builder.setMessage(Util.checkInternetConnection(c) ? R.string.elevation_error :
                 R.string.elevation_error_no_connection);
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
