@@ -53,9 +53,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -115,14 +115,13 @@ public class Map extends FragmentActivity {
 
     boolean metric; // display in metric units
 
-    private LocationClient locationClient;
-
     private static BitmapDescriptor marker;
 
     private IInAppBillingService mService;
     private static boolean PRO_VERSION = false;
 
     private DrawerListAdapter drawerListAdapert;
+    private GoogleApiClient mGoogleApiClient;
 
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
@@ -454,25 +453,27 @@ public class Map extends FragmentActivity {
                 e.printStackTrace();
             }
         }
-        locationClient = new LocationClient(this, new ConnectionCallbacks() {
-            @Override
-            public void onDisconnected() {
 
-            }
+        mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(final Bundle bundle) {
+                        Location l =
+                                LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                        if (l != null && mMap.getCameraPosition().zoom <= 2) {
+                            mMap.moveCamera(CameraUpdateFactory
+                                    .newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()),
+                                            16));
+                        }
+                        mGoogleApiClient.disconnect();
+                    }
 
-            @Override
-            public void onConnected(final Bundle b) {
-                Location l = locationClient.getLastLocation();
-                // only move to current position if not zoomed in at another
-                // location already
-                if (l != null && mMap.getCameraPosition().zoom <= 2) {
-                    mMap.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()), 16));
-                }
-                locationClient.disconnect();
-            }
-        }, null);
-        locationClient.connect();
+                    @Override
+                    public void onConnectionSuspended(int cause) {
+
+                    }
+                }).build();
+        mGoogleApiClient.connect();
 
         valueTv = (TextView) findViewById(R.id.distance);
         updateValueText();
