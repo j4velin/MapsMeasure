@@ -94,9 +94,9 @@ public class Map extends FragmentActivity {
     private DrawerLayout mDrawerLayout;
 
     // the stacks - everytime the user touches the map, an entry is pushed
-    private final Stack<LatLng> trace = new Stack<LatLng>();
-    private final Stack<Polyline> lines = new Stack<Polyline>();
-    private final Stack<Marker> points = new Stack<Marker>();
+    private final Stack<LatLng> trace = new Stack<>();
+    private final Stack<Polyline> lines = new Stack<>();
+    private final Stack<Marker> points = new Stack<>();
 
     private Polygon areaOverlay;
 

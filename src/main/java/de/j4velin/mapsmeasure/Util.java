@@ -122,7 +122,7 @@ class Util {
      * @throws IOException
      */
     static void loadFromFile(final Uri f, final Map m) throws IOException {
-        List<LatLng> list = new LinkedList<LatLng>();
+        List<LatLng> list = new LinkedList<>();
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(m.getContentResolver().openInputStream(f)));
         String line;
@@ -131,12 +131,8 @@ class Util {
             data = line.split(";");
             try {
                 list.add(new LatLng(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
-            } catch (NumberFormatException nfe) {
-                // should not happen when opening a valid file
+            } catch (Exception nfe) {
                 nfe.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException aiabe) {
-                // should not happen when opening a valid file
-                aiabe.printStackTrace();
             }
         }
         in.close();
@@ -159,7 +155,7 @@ class Util {
     static float getAltitude(final LatLng p, final HttpClient httpClient, final HttpContext localContext) throws
             IOException {
         if (elevationCache == null) {
-            elevationCache = new HashMap<LatLng, Float>(30);
+            elevationCache = new HashMap<>(30);
         }
         if (elevationCache.containsKey(p)) {
             return elevationCache.get(p);
@@ -228,7 +224,7 @@ class Util {
             e.printStackTrace();
             return null;
         }
-        return new Pair<Float, Float>(up, down);
+        return new Pair<>(up, down);
     }
 
     /**
