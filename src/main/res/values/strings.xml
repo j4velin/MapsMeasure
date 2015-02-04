@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingTranslation" >
 
-    <string name="app_name">Maps Measure</string>
     <string name="section_measure">Measure</string>
     <string name="section_mapview">Map view</string>
     <string name="measure_distance">Distance</string>
