@@ -133,6 +133,7 @@ public class DrawerListAdapter extends BaseAdapter {
                             });
                 }
             } else {
+                if (BuildConfig.DEBUG) Logger.log("Geocoder not present");
                 convertView = mInflater.inflate(R.layout.listitem_empty, null);
             }
         } else if (type == ID_EMPTY) {

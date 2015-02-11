@@ -44,7 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-class Util {
+abstract class Util {
 
     private static HashMap<LatLng, Float> elevationCache;
 

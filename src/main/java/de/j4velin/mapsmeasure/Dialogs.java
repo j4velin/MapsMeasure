@@ -49,7 +49,7 @@ import java.util.Stack;
 
 import de.j4velin.mapsmeasure.wrapper.API8Wrapper;
 
-class Dialogs {
+abstract class Dialogs {
 
     /**
      * @param c the Context

@@ -261,6 +261,7 @@ public class Map extends FragmentActivity {
                             savedInstanceState.getDouble("position-lon")),
                     savedInstanceState.getFloat("position-zoom")));
         } catch (Exception e) {
+            if (BuildConfig.DEBUG) Logger.log(e);
             e.printStackTrace();
         }
     }
@@ -327,6 +328,7 @@ public class Map extends FragmentActivity {
         try {
             super.onCreate(savedInstanceState);
         } catch (final BadParcelableException bpe) {
+            if (BuildConfig.DEBUG) Logger.log(bpe);
             bpe.printStackTrace();
         }
         setContentView(R.layout.activity_map);
@@ -398,6 +400,8 @@ public class Map extends FragmentActivity {
                 .getMap();
 
         if (mMap == null) {
+            if (BuildConfig.DEBUG) Logger.log("Map = null - play services available: " +
+                    GooglePlayServicesUtil.isGooglePlayServicesAvailable(this));
             Dialog d = GooglePlayServicesUtil
                     .getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this),
                             this, 0);
@@ -434,7 +438,7 @@ public class Map extends FragmentActivity {
                         Toast.makeText(Map.this, R.string.marker_on_current_location,
                                 Toast.LENGTH_SHORT).show();
                         addPoint(myLocation);
-                    }
+                    } else if (BuildConfig.DEBUG) Logger.log("location accuracy too bad to add point");
                 }
                 return false;
             }
@@ -447,6 +451,7 @@ public class Map extends FragmentActivity {
                 if (!trace.isEmpty())
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(trace.peek(), 16));
             } catch (IOException e) {
+                if (BuildConfig.DEBUG) Logger.log(e);
                 Toast.makeText(this, getString(R.string.error,
                         e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
                         .show();
@@ -470,7 +475,7 @@ public class Map extends FragmentActivity {
 
                     @Override
                     public void onConnectionSuspended(int cause) {
-
+                        if (BuildConfig.DEBUG) Logger.log("connection suspended: "+cause);
                     }
                 }).build();
         mGoogleApiClient.connect();
@@ -724,6 +729,7 @@ public class Map extends FragmentActivity {
                             .putBoolean("pro", PRO_VERSION).commit();
                     changeType(MeasureType.ELEVATION);
                 } catch (Exception e) {
+                    if (BuildConfig.DEBUG) Logger.log(e);
                     Toast.makeText(this, e.getClass().getName() + ": " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                     e.printStackTrace();
