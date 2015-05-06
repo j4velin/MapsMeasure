@@ -21,7 +21,7 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-public class API17Wrapper {
+public abstract class API17Wrapper {
     public static void getRealMetrics(final Display d, final DisplayMetrics dm) {
         d.getRealMetrics(dm);
     }

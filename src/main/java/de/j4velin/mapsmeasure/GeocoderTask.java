@@ -51,6 +51,7 @@ public class GeocoderTask extends AsyncTask<String, Void, Address> {
             List<Address> addresses = geocoder.getFromLocationName(locationName[0], 1);
             return addresses != null && !addresses.isEmpty() ? addresses.get(0) : null;
         } catch (IOException e) {
+            if (BuildConfig.DEBUG) Logger.log(e);
             e.printStackTrace();
             return null;
         }
@@ -59,6 +60,7 @@ public class GeocoderTask extends AsyncTask<String, Void, Address> {
     @Override
     protected void onPostExecute(final Address address) {
         if (address == null) {
+            if (BuildConfig.DEBUG) Logger.log("no location found");
             Toast.makeText(map.getBaseContext(), R.string.no_location_found, Toast.LENGTH_SHORT).show();
         } else {
             map.getMap().animateCamera(CameraUpdateFactory

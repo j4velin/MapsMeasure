@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Maps Measure</string>
     <string name="section_measure">Messen</string>
     <string name="section_mapview">Ansicht</string>
     <string name="measure_distance">Distanz</string>

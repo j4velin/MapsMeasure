@@ -53,9 +53,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -94,9 +94,9 @@ public class Map extends FragmentActivity {
     private DrawerLayout mDrawerLayout;
 
     // the stacks - everytime the user touches the map, an entry is pushed
-    private final Stack<LatLng> trace = new Stack<LatLng>();
-    private final Stack<Polyline> lines = new Stack<Polyline>();
-    private final Stack<Marker> points = new Stack<Marker>();
+    private final Stack<LatLng> trace = new Stack<>();
+    private final Stack<Polyline> lines = new Stack<>();
+    private final Stack<Marker> points = new Stack<>();
 
     private Polygon areaOverlay;
 
@@ -115,14 +115,13 @@ public class Map extends FragmentActivity {
 
     boolean metric; // display in metric units
 
-    private LocationClient locationClient;
-
     private static BitmapDescriptor marker;
 
     private IInAppBillingService mService;
     private static boolean PRO_VERSION = false;
 
     private DrawerListAdapter drawerListAdapert;
+    private GoogleApiClient mGoogleApiClient;
 
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
@@ -262,6 +261,7 @@ public class Map extends FragmentActivity {
                             savedInstanceState.getDouble("position-lon")),
                     savedInstanceState.getFloat("position-zoom")));
         } catch (Exception e) {
+            if (BuildConfig.DEBUG) Logger.log(e);
             e.printStackTrace();
         }
     }
@@ -328,6 +328,7 @@ public class Map extends FragmentActivity {
         try {
             super.onCreate(savedInstanceState);
         } catch (final BadParcelableException bpe) {
+            if (BuildConfig.DEBUG) Logger.log(bpe);
             bpe.printStackTrace();
         }
         setContentView(R.layout.activity_map);
@@ -399,6 +400,8 @@ public class Map extends FragmentActivity {
                 .getMap();
 
         if (mMap == null) {
+            if (BuildConfig.DEBUG) Logger.log("Map = null - play services available: " +
+                    GooglePlayServicesUtil.isGooglePlayServicesAvailable(this));
             Dialog d = GooglePlayServicesUtil
                     .getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this),
                             this, 0);
@@ -435,7 +438,7 @@ public class Map extends FragmentActivity {
                         Toast.makeText(Map.this, R.string.marker_on_current_location,
                                 Toast.LENGTH_SHORT).show();
                         addPoint(myLocation);
-                    }
+                    } else if (BuildConfig.DEBUG) Logger.log("location accuracy too bad to add point");
                 }
                 return false;
             }
@@ -448,31 +451,34 @@ public class Map extends FragmentActivity {
                 if (!trace.isEmpty())
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(trace.peek(), 16));
             } catch (IOException e) {
+                if (BuildConfig.DEBUG) Logger.log(e);
                 Toast.makeText(this, getString(R.string.error,
                         e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
                         .show();
                 e.printStackTrace();
             }
         }
-        locationClient = new LocationClient(this, new ConnectionCallbacks() {
-            @Override
-            public void onDisconnected() {
 
-            }
+        mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(final Bundle bundle) {
+                        Location l =
+                                LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                        if (l != null && mMap.getCameraPosition().zoom <= 2) {
+                            mMap.moveCamera(CameraUpdateFactory
+                                    .newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()),
+                                            16));
+                        }
+                        mGoogleApiClient.disconnect();
+                    }
 
-            @Override
-            public void onConnected(final Bundle b) {
-                Location l = locationClient.getLastLocation();
-                // only move to current position if not zoomed in at another
-                // location already
-                if (l != null && mMap.getCameraPosition().zoom <= 2) {
-                    mMap.moveCamera(CameraUpdateFactory
-                            .newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()), 16));
-                }
-                locationClient.disconnect();
-            }
-        }, null);
-        locationClient.connect();
+                    @Override
+                    public void onConnectionSuspended(int cause) {
+                        if (BuildConfig.DEBUG) Logger.log("connection suspended: "+cause);
+                    }
+                }).build();
+        mGoogleApiClient.connect();
 
         valueTv = (TextView) findViewById(R.id.distance);
         updateValueText();
@@ -723,6 +729,7 @@ public class Map extends FragmentActivity {
                             .putBoolean("pro", PRO_VERSION).commit();
                     changeType(MeasureType.ELEVATION);
                 } catch (Exception e) {
+                    if (BuildConfig.DEBUG) Logger.log(e);
                     Toast.makeText(this, e.getClass().getName() + ": " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                     e.printStackTrace();

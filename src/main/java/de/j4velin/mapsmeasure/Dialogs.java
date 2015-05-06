@@ -47,9 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Stack;
 
-import de.j4velin.mapsmeasure.wrapper.API8Wrapper;
-
-class Dialogs {
+abstract class Dialogs {
 
     /**
      * @param c the Context
@@ -96,9 +94,8 @@ class Dialogs {
             @Override
             public void onClick(final View v) {
                 final File destination;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO &&
-                        Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-                    destination = API8Wrapper.getExternalFilesDir(c);
+                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+                    destination = c.getExternalFilesDir(null);
                 } else {
                     destination = c.getDir("traces", Context.MODE_PRIVATE);
                 }
@@ -126,6 +123,7 @@ class Dialogs {
                             Toast.makeText(c, c.getString(R.string.file_saved, f.getAbsolutePath()),
                                     Toast.LENGTH_SHORT).show();
                         } catch (Exception e) {
+                            if (BuildConfig.DEBUG) Logger.log(e);
                             Toast.makeText(c, c.getString(R.string.error,
                                             e.getClass().getSimpleName() + "\n" + e.getMessage()),
                                     Toast.LENGTH_LONG).show();
@@ -141,9 +139,8 @@ class Dialogs {
 
                 File[] files = c.getDir("traces", Context.MODE_PRIVATE).listFiles();
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO &&
-                        Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-                    File ext = API8Wrapper.getExternalFilesDir(c);
+                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+                    File ext = c.getExternalFilesDir(null);
                     // even though we checked the external storage state, ext is still sometimes null, accoring to Play Store crash reports
                     if (ext != null) {
                         File[] filesExtern = ext.listFiles();
@@ -164,6 +161,7 @@ class Dialogs {
                         Util.loadFromFile(Uri.fromFile(files[0]), (Map) c);
                         d.dismiss();
                     } catch (IOException e) {
+                        if (BuildConfig.DEBUG) Logger.log(e);
                         e.printStackTrace();
                         Toast.makeText(c, c.getString(R.string.error,
                                         e.getClass().getSimpleName() + "\n" + e.getMessage()),
@@ -181,6 +179,7 @@ class Dialogs {
                                 Util.loadFromFile(Uri.fromFile(da.getFile(which)), (Map) c);
                                 dialog.dismiss();
                             } catch (IOException e) {
+                                if (BuildConfig.DEBUG) Logger.log(e);
                                 e.printStackTrace();
                                 Toast.makeText(c, c.getString(R.string.error,
                                         e.getClass().getSimpleName() + "\n" +
@@ -207,6 +206,7 @@ class Dialogs {
                     d.dismiss();
                     c.startActivity(Intent.createChooser(shareIntent, null));
                 } catch (IOException e) {
+                    if (BuildConfig.DEBUG) Logger.log(e);
                     e.printStackTrace();
                     Toast.makeText(c, c.getString(R.string.error,
                                     e.getClass().getSimpleName() + "\n" + e.getMessage()),
@@ -304,6 +304,7 @@ class Dialogs {
                                 0, 0);
                     }
                 } catch (Exception e) {
+                    if (BuildConfig.DEBUG) Logger.log(e);
                     Toast.makeText(c, e.getClass().getName() + ": " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                     e.printStackTrace();

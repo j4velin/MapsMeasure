@@ -52,7 +52,7 @@ class DeleteAdapter extends BaseAdapter {
 	 *            the calling activity
 	 */
 	public DeleteAdapter(final File[] f, final Map c) {
-		files = new ArrayList<File>(Arrays.asList(f));
+		files = new ArrayList<>(Arrays.asList(f));
 		mInflater = c.getLayoutInflater();
 	}
 
