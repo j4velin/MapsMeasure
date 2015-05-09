@@ -24,14 +24,7 @@ import android.util.TypedValue;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -39,6 +32,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,32 +140,28 @@ abstract class Util {
     /**
      * Get the altitude data for a specific point
      *
-     * @param p            the point to get the altitude for
-     * @param httpClient   can be null if no network query should be performed
-     * @param localContext can be null if no network query should be performed
+     * @param p the point to get the altitude for
      * @return the altitude at point p or -Float.MAX_VALUE if no valid data
      * could be fetched
      * @throws IOException
      */
-    static float getAltitude(final LatLng p, final HttpClient httpClient, final HttpContext localContext) throws
-            IOException {
+    static float getAltitude(final LatLng p) throws IOException {
         if (elevationCache == null) {
             elevationCache = new HashMap<>(30);
         }
         if (elevationCache.containsKey(p)) {
             return elevationCache.get(p);
-        } else if (httpClient != null && localContext != null) {
+        } else {
             float altitude = -Float.MAX_VALUE;
-            String url = "http://maps.googleapis.com/maps/api/elevation/xml?locations=" +
-                    String.valueOf(p.latitude) + "," + String.valueOf(p.longitude) + "&sensor=true";
-            HttpGet httpGet = new HttpGet(url);
-            HttpResponse response = httpClient.execute(httpGet, localContext);
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream instream = entity.getContent();
+            URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?locations=" +
+                    String.valueOf(p.latitude) + "," + String.valueOf(p.longitude) +
+                    "&sensor=true");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            try {
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                 int r;
                 StringBuilder respStr = new StringBuilder();
-                while ((r = instream.read()) != -1) respStr.append((char) r);
+                while ((r = in.read()) != -1) respStr.append((char) r);
                 String tagOpen = "<elevation>";
                 String tagClose = "</elevation>";
                 if (respStr.indexOf(tagOpen) != -1) {
@@ -179,11 +170,11 @@ abstract class Util {
                     altitude = Float.parseFloat(respStr.substring(start, end));
                     elevationCache.put(p, altitude);
                 }
-                instream.close();
+                in.close();
+            } finally {
+                urlConnection.disconnect();
             }
             return altitude;
-        } else {
-            return elevationCache.get(p);
         }
     }
 
@@ -204,12 +195,10 @@ abstract class Util {
     static Pair<Float, Float> getElevation(final List<LatLng> trace) {
         float up = 0, down = 0;
         float lastElevation = -Float.MAX_VALUE, currentElevation;
-        HttpClient httpClient = new DefaultHttpClient();
-        HttpContext localContext = new BasicHttpContext();
         float difference;
         try {
             for (LatLng p : trace) {
-                currentElevation = getAltitude(p, httpClient, localContext);
+                currentElevation = getAltitude(p);
 
                 // current and last point have a valid elevation data ->
                 // calculate difference

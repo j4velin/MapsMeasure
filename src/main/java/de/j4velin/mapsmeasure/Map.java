@@ -228,7 +228,7 @@ public class Map extends FragmentActivity {
                                 " ft\u2B07";
                 if (!trace.isEmpty()) {
                     try {
-                        float lastPoint = Util.getAltitude(trace.peek(), null, null);
+                        float lastPoint = Util.getAltitude(trace.peek());
                         if (lastPoint > -Float.MAX_VALUE) {
                             re += "\n" + (metric ? formatter_two_dec.format(lastPoint) + " m" :
                                     formatter_two_dec.format(lastPoint / 0.3048f) + " ft");
