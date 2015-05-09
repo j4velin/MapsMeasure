@@ -85,7 +85,7 @@ import de.j4velin.mapsmeasure.wrapper.API17Wrapper;
 
 public class Map extends FragmentActivity {
 
-    public static enum MeasureType {
+    enum MeasureType {
         DISTANCE, AREA, ELEVATION
     }
 
@@ -174,6 +174,9 @@ public class Map extends FragmentActivity {
                 else return formatter_two_dec.format(Math.max(0, distance)) + " m";
             } else {
                 if (distance > 1609) return formatter_two_dec.format(distance / 1609.344f) + " mi";
+                else if (distance > 30)
+                    return formatter_two_dec.format(distance / 1609.344f) + " mi\n" +
+                            formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
                 else return formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
             }
         } else if (type == MeasureType.AREA) {
@@ -438,7 +441,8 @@ public class Map extends FragmentActivity {
                         Toast.makeText(Map.this, R.string.marker_on_current_location,
                                 Toast.LENGTH_SHORT).show();
                         addPoint(myLocation);
-                    } else if (BuildConfig.DEBUG) Logger.log("location accuracy too bad to add point");
+                    } else if (BuildConfig.DEBUG)
+                        Logger.log("location accuracy too bad to add point");
                 }
                 return false;
             }
@@ -475,7 +479,7 @@ public class Map extends FragmentActivity {
 
                     @Override
                     public void onConnectionSuspended(int cause) {
-                        if (BuildConfig.DEBUG) Logger.log("connection suspended: "+cause);
+                        if (BuildConfig.DEBUG) Logger.log("connection suspended: " + cause);
                     }
                 }).build();
         mGoogleApiClient.connect();
