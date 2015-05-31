@@ -45,7 +45,8 @@ repositories {
 
 dependencies {
     compile 'com.android.support:support-v4:22.+'
-    compile 'com.google.android.gms:play-services:+'
+    compile 'com.google.android.gms:play-services-location:+'
+    compile 'com.google.android.gms:play-services-maps:+'
 }
 
 def props = new Properties()
