@@ -228,11 +228,11 @@ abstract class Dialogs {
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         d.setContentView(R.layout.dialog_unit);
         CheckBox metricCb = (CheckBox) d.findViewById(R.id.metric);
-        metricCb.setChecked(m.metric);
+        metricCb.setChecked(Map.metric);
         metricCb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                m.metric = !m.metric;
+                Map.metric = !Map.metric;
                 m.getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
                         .putBoolean("metric", isChecked).commit();
                 m.updateValueText();

@@ -113,7 +113,7 @@ public class Map extends FragmentActivity {
     private final static NumberFormat formatter_no_dec =
             NumberFormat.getInstance(Locale.getDefault());
 
-    boolean metric; // display in metric units
+    static boolean metric; // display in metric units
 
     private static BitmapDescriptor marker;
 
@@ -122,6 +122,8 @@ public class Map extends FragmentActivity {
 
     private DrawerListAdapter drawerListAdapert;
     private GoogleApiClient mGoogleApiClient;
+
+    private ElevationView elevationView;
 
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
@@ -169,6 +171,7 @@ public class Map extends FragmentActivity {
      */
     private String getFormattedString() {
         if (type == MeasureType.DISTANCE) {
+            elevationView.setVisibility(View.GONE);
             if (metric) {
                 if (distance > 1000) return formatter_two_dec.format(distance / 1000) + " km";
                 else return formatter_two_dec.format(Math.max(0, distance)) + " m";
@@ -180,6 +183,7 @@ public class Map extends FragmentActivity {
                 else return formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
             }
         } else if (type == MeasureType.AREA) {
+            elevationView.setVisibility(View.GONE);
             double area;
             if (areaOverlay != null) areaOverlay.remove();
             if (trace.size() >= 3) {
@@ -204,7 +208,7 @@ public class Map extends FragmentActivity {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        altitude = Util.getElevation(trace);
+                        altitude = Util.updateElevationView(elevationView, trace);
                         h.post(new Runnable() {
                             @Override
                             public void run() {
@@ -214,6 +218,7 @@ public class Map extends FragmentActivity {
                                     changeType(MeasureType.DISTANCE);
                                 } else {
                                     updateValueText();
+                                    elevationView.invalidate();
                                 }
                             }
                         });
@@ -228,7 +233,7 @@ public class Map extends FragmentActivity {
                                 " ft\u2B07";
                 if (!trace.isEmpty()) {
                     try {
-                        float lastPoint = Util.getAltitude(trace.peek());
+                        float lastPoint = Util.lastElevation;
                         if (lastPoint > -Float.MAX_VALUE) {
                             re += "\n" + (metric ? formatter_two_dec.format(lastPoint) + " m" :
                                     formatter_two_dec.format(lastPoint / 0.3048f) + " ft");
@@ -237,6 +242,7 @@ public class Map extends FragmentActivity {
                         e.printStackTrace();
                     }
                 }
+                elevationView.setVisibility(trace.size() > 1 ? View.VISIBLE : View.GONE);
                 altitude = null;
                 return re;
             }
@@ -335,6 +341,8 @@ public class Map extends FragmentActivity {
             bpe.printStackTrace();
         }
         setContentView(R.layout.activity_map);
+
+        elevationView = (ElevationView) findViewById(R.id.elevationsview);
 
         formatter_no_dec.setMaximumFractionDigits(0);
         formatter_two_dec.setMaximumFractionDigits(2);

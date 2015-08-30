@@ -24,28 +24,27 @@ import android.util.TypedValue;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
 abstract class Util {
 
-    private static HashMap<LatLng, Float> elevationCache;
+    public static float lastElevation;
+    public static final String TAG_OPEN = "<elevation>";
+    public static final String TAG_CLOSE = "</elevation>";
+    public static final int ELEVATION_TRACE_SAMPLES = 10;
 
     /**
      * Returns the height of the status bar
-     * <p/>
      * from http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
      *
      * @param c the Context
@@ -138,81 +137,96 @@ abstract class Util {
     }
 
     /**
-     * Get the altitude data for a specific point
+     * Queries for a single elevation information
      *
-     * @param p the point to get the altitude for
-     * @return the altitude at point p or -Float.MAX_VALUE if no valid data
-     * could be fetched
-     * @throws IOException
+     * @param loc the location
+     * @return a pair of 0's
      */
-    static float getAltitude(final LatLng p) throws IOException {
-        if (elevationCache == null) {
-            elevationCache = new HashMap<>(30);
-        }
-        if (elevationCache.containsKey(p)) {
-            return elevationCache.get(p);
-        } else {
-            float altitude = -Float.MAX_VALUE;
+    private static Pair<Float, Float> getSingleElevation(LatLng loc) {
+        HttpURLConnection urlConnection = null;
+        BufferedReader in = null;
+        try {
             URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?locations=" +
-                    String.valueOf(p.latitude) + "," + String.valueOf(p.longitude) +
-                    "&sensor=true");
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            try {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                int r;
-                StringBuilder respStr = new StringBuilder();
-                while ((r = in.read()) != -1) respStr.append((char) r);
-                String tagOpen = "<elevation>";
-                String tagClose = "</elevation>";
-                if (respStr.indexOf(tagOpen) != -1) {
-                    int start = respStr.indexOf(tagOpen) + tagOpen.length();
-                    int end = respStr.indexOf(tagClose);
-                    altitude = Float.parseFloat(respStr.substring(start, end));
-                    elevationCache.put(p, altitude);
+                    loc.latitude + "," + loc.longitude);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            String line;
+            int subStringStart = TAG_OPEN.length();
+            while ((line = in.readLine()) != null) {
+                if (line.trim().startsWith(TAG_OPEN)) {
+                    lastElevation = Float.parseFloat(
+                            line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
+                    return new Pair<>(0f, 0f);
                 }
-                in.close();
-            } finally {
-                urlConnection.disconnect();
             }
-            return altitude;
+        } catch (IOException io) {
+            io.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (urlConnection != null) urlConnection.disconnect();
         }
+        return new Pair<>(0f, 0f);
     }
 
     /**
-     * Calculates the up- & downwards elevation along the passed trace.
-     * <p/>
-     * This method might need to connect to the Google Elevation API and
-     * therefore must not be called from the main UI thread.
+     * Updates the elevations graph
      *
-     * @param trace the list of LatLng objects
-     * @return null if an error occurs, a pair of two float values otherwise:
-     * first one is the upwards elevation, second one downwards
-     * <p/>
-     * based on
-     * http://stackoverflow.com/questions/1995998/android-get-altitude
-     * -by-longitude-and-latitude
+     * @param view  the graph
+     * @param trace the points
+     * @return the aggregated up and down distances along the trace
      */
-    static Pair<Float, Float> getElevation(final List<LatLng> trace) {
-        float up = 0, down = 0;
-        float lastElevation = -Float.MAX_VALUE, currentElevation;
-        float difference;
-        try {
-            for (LatLng p : trace) {
-                currentElevation = getAltitude(p);
-
-                // current and last point have a valid elevation data ->
-                // calculate difference
-                if (currentElevation > -Float.MAX_VALUE && lastElevation > -Float.MAX_VALUE) {
-                    difference = currentElevation - lastElevation;
-                    if (difference > 0) up += difference;
-                    else down += difference;
-                }
-                lastElevation = currentElevation;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+    static Pair<Float, Float> updateElevationView(final ElevationView view, final List<LatLng> trace) {
+        if (trace.isEmpty()) return new Pair<>(0f, 0f);
+        if (trace.size() == 1) return getSingleElevation(trace.get(0));
+        StringBuilder path = new StringBuilder();
+        float[] result = new float[ELEVATION_TRACE_SAMPLES];
+        for (LatLng point : trace) {
+            path.append(point.latitude).append(",").append(point.longitude).append("|");
         }
+        path.deleteCharAt(path.length() - 1);
+        HttpURLConnection urlConnection = null;
+        BufferedReader in = null;
+        try {
+            URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?path=" +
+                    path.toString() + "&samples=" + ELEVATION_TRACE_SAMPLES);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            String line;
+            int pos = 0;
+            int subStringStart = TAG_OPEN.length();
+            while ((line = in.readLine()) != null) {
+                if (line.trim().startsWith(TAG_OPEN)) {
+                    result[pos] = Float.parseFloat(
+                            line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
+                    pos++;
+                }
+            }
+        } catch (IOException io) {
+            io.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (urlConnection != null) urlConnection.disconnect();
+        }
+        view.setElevationData(result);
+        float up = 0, down = 0, difference;
+        for (int i = 1; i < result.length; i++) {
+            difference = result[i - 1] - result[i];
+            if (difference < 0) up += difference;
+            else down += difference;
+        }
+        lastElevation = result[result.length - 1];
         return new Pair<>(up, down);
     }
 
