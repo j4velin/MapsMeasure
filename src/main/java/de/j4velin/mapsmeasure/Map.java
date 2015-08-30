@@ -460,8 +460,6 @@ public class Map extends FragmentActivity {
         if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
             try {
                 Util.loadFromFile(getIntent().getData(), this);
-                if (!trace.isEmpty())
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(trace.peek(), 16));
             } catch (IOException e) {
                 if (BuildConfig.DEBUG) Logger.log(e);
                 Toast.makeText(this, getString(R.string.error,
@@ -477,10 +475,10 @@ public class Map extends FragmentActivity {
                     public void onConnected(final Bundle bundle) {
                         Location l =
                                 LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                        if (l != null && mMap.getCameraPosition().zoom <= 2) {
-                            mMap.moveCamera(CameraUpdateFactory
-                                    .newLatLngZoom(new LatLng(l.getLatitude(), l.getLongitude()),
-                                            16));
+                        // dont move to current position if started with a csv file
+                        if (l != null && mMap.getCameraPosition().zoom <= 2 &&
+                                !Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+                            moveCamera(new LatLng(l.getLatitude(), l.getLongitude()));
                         }
                         mGoogleApiClient.disconnect();
                     }
@@ -661,6 +659,15 @@ public class Map extends FragmentActivity {
             bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND")
                     .setPackage("com.android.vending"), mServiceConn, Context.BIND_AUTO_CREATE);
         }
+    }
+
+    /**
+     * Moves the map view to the given position
+     *
+     * @param pos the position to move to
+     */
+    public void moveCamera(final LatLng pos) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, 16));
     }
 
     /**

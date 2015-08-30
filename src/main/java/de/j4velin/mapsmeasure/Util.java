@@ -134,6 +134,7 @@ abstract class Util {
         for (int i = 0; i < list.size(); i++) {
             m.addPoint(list.get(i));
         }
+        if (!list.isEmpty()) m.moveCamera(list.get(0));
     }
 
     /**
