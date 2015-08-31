@@ -41,7 +41,7 @@ abstract class Util {
     public static float lastElevation;
     public static final String TAG_OPEN = "<elevation>";
     public static final String TAG_CLOSE = "</elevation>";
-    public static final int ELEVATION_TRACE_SAMPLES = 10;
+    public static final int ELEVATION_TRACE_SAMPLES = 20;
 
     /**
      * Returns the height of the status bar

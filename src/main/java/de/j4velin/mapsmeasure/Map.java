@@ -637,19 +637,27 @@ public class Map extends FragmentActivity {
                     android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
                     (total.widthPixels - available.widthPixels > 0);
 
+            FrameLayout.LayoutParams elevationParams =
+                    (FrameLayout.LayoutParams) elevationView.getLayoutParams();
+
+            int drawerSize = mDrawerLayout == null ? Util.dpToPx(this, 200) : 0;
+
             if (navBarOnRight) {
                 // in landscape on phones, the navigation bar might be at the
                 // right side, reducing the available display width
-                mMap.setPadding(mDrawerLayout == null ? Util.dpToPx(this, 200) : 0, statusbar,
-                        navBarHeight, 0);
+                mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
                 drawerList.setPadding(0, statusbar + 10, 0, 0);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
+                elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
             } else {
                 mMap.setPadding(0, statusbar, 0, navBarHeight);
                 drawerList.setPadding(0, statusbar + 10, 0, 0);
                 drawerListAdapert.setMarginBottom(navBarHeight);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
+                elevationParams.setMargins(Math.max(drawerSize, Util.dpToPx(this, 25)), 0, 0,
+                        navBarHeight);
             }
+            elevationView.setLayoutParams(elevationParams);
         }
 
         mMap.setMyLocationEnabled(true);

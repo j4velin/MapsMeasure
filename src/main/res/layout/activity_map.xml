@@ -56,13 +56,9 @@
             android:id="@+id/elevationsview"
             android:layout_width="match_parent"
             android:layout_height="100dp"
-            android:layout_gravity="top|center_horizontal"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="95dp"
+            android:layout_gravity="right|bottom"
             android:background="@drawable/value_background"
-            android:padding="5dp"
-            android:visibility="gone"/>
+            android:padding="5dp"/>
 
     </FrameLayout>
     <!-- The navigation drawer -->
