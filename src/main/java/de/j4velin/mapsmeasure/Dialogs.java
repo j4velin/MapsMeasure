@@ -16,6 +16,7 @@
 
 package de.j4velin.mapsmeasure;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -321,6 +322,12 @@ abstract class Dialogs {
         return builder.create();
     }
 
+    /**
+     * Workaround if the edittext search doesnt work
+     *
+     * @param map the map activity
+     * @return a search dialog
+     */
     public static Dialog getSearchDialog(final Map map) {
         AlertDialog.Builder builder = new AlertDialog.Builder(map);
         final EditText search = new EditText(map);
@@ -348,6 +355,26 @@ abstract class Dialogs {
                 inputManager.hideSoftInputFromWindow(search.getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
                 dialog.dismiss();
+            }
+        });
+        return builder.create();
+    }
+
+
+    /**
+     * Creates the dialog explaining why the EXTERNAL_STORAGE permission is necessary
+     *
+     * @param a the activity
+     * @return the dialog
+     */
+    public static Dialog getPermissionExplainDialog(final Activity a) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(a);
+        builder.setMessage(R.string.permission_explain);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(final DialogInterface dialog, int which) {
+                a.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        Map.REQUEST_EXTERNAL_STORAGE_PERMISSION);
             }
         });
         return builder.create();

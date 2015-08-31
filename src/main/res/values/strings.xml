@@ -34,5 +34,6 @@
     <string name="file_name">File name (optional)</string>
     <string name="file_path">File will be saved here: %s</string>
     <string name="marker_on_current_location">A marker was added on your current location</string>
+    <string name="permission_explain">The app requires the permission to write to the external storage of your device to create temporary cache files for parts of the map. Without this permission, the app can not run</string>
 
 </resources>

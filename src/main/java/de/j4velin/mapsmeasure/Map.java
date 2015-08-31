@@ -16,6 +16,7 @@
 
 package de.j4velin.mapsmeasure;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -38,6 +39,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.PermissionChecker;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.DisplayMetrics;
@@ -105,14 +107,6 @@ public class Map extends FragmentActivity {
     private MeasureType type; // the currently selected measure type
     private TextView valueTv; // the view displaying the distance/area & unit
 
-    private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT =
-            Color.argb(128, 255, 0, 0);
-    private final static float LINE_WIDTH = 5f;
-
-    final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
-    private final static NumberFormat formatter_no_dec =
-            NumberFormat.getInstance(Locale.getDefault());
-
     static boolean metric; // display in metric units
 
     private static BitmapDescriptor marker;
@@ -124,6 +118,19 @@ public class Map extends FragmentActivity {
     private GoogleApiClient mGoogleApiClient;
 
     private ElevationView elevationView;
+
+    // store last location callback in case we dont have location permission yet and need to execute it later
+    private LocationCallback lastLocationCallback;
+
+    // Constants
+    private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT =
+            Color.argb(128, 255, 0, 0);
+    private final static float LINE_WIDTH = 5f;
+    final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
+    private final static NumberFormat formatter_no_dec =
+            NumberFormat.getInstance(Locale.getDefault());
+    private final static int REQUEST_LOCATION_PERMISSION = 0;
+    final static int REQUEST_EXTERNAL_STORAGE_PERMISSION = 1;
 
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
@@ -340,6 +347,20 @@ public class Map extends FragmentActivity {
             if (BuildConfig.DEBUG) Logger.log(bpe);
             bpe.printStackTrace();
         }
+        if (PermissionChecker
+                .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PermissionChecker.PERMISSION_GRANTED) {
+            init();
+        } else {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_EXTERNAL_STORAGE_PERMISSION);
+        }
+    }
+
+    /**
+     * Initializes everything
+     */
+    private void init() {
         setContentView(R.layout.activity_map);
 
         elevationView = (ElevationView) findViewById(R.id.elevationsview);
@@ -438,21 +459,29 @@ public class Map extends FragmentActivity {
         mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
             @Override
             public boolean onMyLocationButtonClick() {
-                if (mMap.getMyLocation() != null) {
-                    LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(),
-                            mMap.getMyLocation().getLongitude());
-                    double distance = SphericalUtil
-                            .computeDistanceBetween(myLocation, mMap.getCameraPosition().target);
+                getCurrentLocation(new LocationCallback() {
+                    @Override
+                    public void gotLocation(final Location location) {
+                        if (location != null) {
+                            LatLng myLocation =
+                                    new LatLng(location.getLatitude(), location.getLongitude());
+                            double distance = SphericalUtil.computeDistanceBetween(myLocation,
+                                    mMap.getCameraPosition().target);
 
-                    // Only if the distance is less than 50cm we are on our location, add the marker
-                    if (distance < 0.5) {
-                        Toast.makeText(Map.this, R.string.marker_on_current_location,
-                                Toast.LENGTH_SHORT).show();
-                        addPoint(myLocation);
-                    } else if (BuildConfig.DEBUG)
-                        Logger.log("location accuracy too bad to add point");
-                }
-                return false;
+                            // Only if the distance is less than 50cm we are on our location, add the marker
+                            if (distance < 0.5) {
+                                Toast.makeText(Map.this, R.string.marker_on_current_location,
+                                        Toast.LENGTH_SHORT).show();
+                                addPoint(myLocation);
+                            } else {
+                                if (BuildConfig.DEBUG)
+                                    Logger.log("location accuracy too bad to add point");
+                                moveCamera(myLocation);
+                            }
+                        }
+                    }
+                });
+                return true;
             }
         });
 
@@ -467,28 +496,17 @@ public class Map extends FragmentActivity {
                         .show();
                 e.printStackTrace();
             }
+        } else {
+            // dont move to current position if started with a csv file
+            getCurrentLocation(new LocationCallback() {
+                @Override
+                public void gotLocation(final Location location) {
+                    if (location != null && mMap.getCameraPosition().zoom <= 2) {
+                        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()));
+                    }
+                }
+            });
         }
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
-                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(final Bundle bundle) {
-                        Location l =
-                                LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                        // dont move to current position if started with a csv file
-                        if (l != null && mMap.getCameraPosition().zoom <= 2 &&
-                                !Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-                            moveCamera(new LatLng(l.getLatitude(), l.getLongitude()));
-                        }
-                        mGoogleApiClient.disconnect();
-                    }
-
-                    @Override
-                    public void onConnectionSuspended(int cause) {
-                        if (BuildConfig.DEBUG) Logger.log("connection suspended: " + cause);
-                    }
-                }).build();
-        mGoogleApiClient.connect();
 
         valueTv = (TextView) findViewById(R.id.distance);
         updateValueText();
@@ -670,6 +688,40 @@ public class Map extends FragmentActivity {
     }
 
     /**
+     * Tries to get the users current position
+     *
+     * @param callback the callback which should be called when we got a location
+     */
+    private void getCurrentLocation(final LocationCallback callback) {
+        if (PermissionChecker
+                .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PermissionChecker.PERMISSION_GRANTED && PermissionChecker
+                .checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PermissionChecker.PERMISSION_GRANTED) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
+                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                        @Override
+                        public void onConnected(final Bundle bundle) {
+                            Location l = LocationServices.FusedLocationApi
+                                    .getLastLocation(mGoogleApiClient);
+                            mGoogleApiClient.disconnect();
+                            callback.gotLocation(l);
+                        }
+
+                        @Override
+                        public void onConnectionSuspended(int cause) {
+                            if (BuildConfig.DEBUG) Logger.log("connection suspended: " + cause);
+                        }
+                    }).build();
+            mGoogleApiClient.connect();
+        } else { // no permission
+            lastLocationCallback = callback;
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+        }
+    }
+
+    /**
      * Moves the map view to the given position
      *
      * @param pos the position to move to
@@ -726,6 +778,31 @@ public class Map extends FragmentActivity {
      */
     void updateValueText() {
         if (valueTv != null) valueTv.setText(getFormattedString());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, final String[] permissions, final int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_LOCATION_PERMISSION:
+                if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
+                        grantResults[1] == PermissionChecker.PERMISSION_GRANTED) {
+                    getCurrentLocation(lastLocationCallback);
+                }
+                break;
+            case REQUEST_EXTERNAL_STORAGE_PERMISSION:
+                if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
+                    init();
+                } else {
+                    if (shouldShowRequestPermissionRationale(permissions[0])) {
+                        Dialogs.getPermissionExplainDialog(this).show();
+                    } else {
+                        finish();
+                    }
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     @Override
