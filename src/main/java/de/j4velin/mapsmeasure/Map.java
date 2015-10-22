@@ -38,6 +38,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.BuildConfig;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.PermissionChecker;
 import android.support.v4.view.GravityCompat;
@@ -132,6 +133,8 @@ public class Map extends FragmentActivity {
     private final static int REQUEST_LOCATION_PERMISSION = 0;
     final static int REQUEST_EXTERNAL_STORAGE_PERMISSION = 1;
 
+    final static String SKU = "de.j4velin.mapsmeasure.billing.pro";
+
     private final ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceDisconnected(final ComponentName name) {
@@ -147,7 +150,7 @@ public class Map extends FragmentActivity {
                     PRO_VERSION =
                             ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST") != null &&
                                     ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST")
-                                            .contains("de.j4velin.mapsmeasure.billing.pro");
+                                            .contains(SKU);
                     getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
                             .putBoolean("pro", PRO_VERSION).commit();
                 }
@@ -827,7 +830,7 @@ public class Map extends FragmentActivity {
             if (data.getIntExtra("RESPONSE_CODE", 0) == 0) {
                 try {
                     JSONObject jo = new JSONObject(data.getStringExtra("INAPP_PURCHASE_DATA"));
-                    PRO_VERSION = jo.getString("productId").equals("de.j4velin.mapsmeasure.pro") &&
+                    PRO_VERSION = jo.getString("productId").equals(SKU) &&
                             jo.getString("developerPayload").equals(getPackageName());
                     getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
                             .putBoolean("pro", PRO_VERSION).commit();

@@ -28,6 +28,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.BuildConfig;
 import android.support.v4.content.FileProvider;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
@@ -297,8 +298,9 @@ abstract class Dialogs {
             @Override
             public void onClick(final DialogInterface dialog, int which) {
                 try {
-                    Bundle buyIntentBundle = service.getBuyIntent(3, c.getPackageName(),
-                            "de.j4velin.mapsmeasure.billing.pro", "inapp", c.getPackageName());
+                    Bundle buyIntentBundle =
+                            service.getBuyIntent(3, c.getPackageName(), Map.SKU, "inapp",
+                                    c.getPackageName());
                     if (buyIntentBundle.getInt("RESPONSE_CODE") == 0) {
                         PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                         c.startIntentSenderForResult(pendingIntent.getIntentSender(), 42, null, 0,
