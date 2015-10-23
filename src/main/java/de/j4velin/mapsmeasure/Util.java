@@ -101,7 +101,7 @@ abstract class Util {
         LatLng current;
         for (int i = 0; i < trace.size(); i++) {
             current = trace.get(i);
-            out.append(String.valueOf(current.latitude)).append(";")
+            out.append(String.valueOf(current.latitude)).append(",")
                     .append(String.valueOf(current.longitude)).append("\n");
         }
         out.close();
@@ -122,7 +122,8 @@ abstract class Util {
         String line;
         String[] data;
         while ((line = in.readLine()) != null) {
-            data = line.split(";");
+            data = line.split(",");
+            if (data.length != 2) data = line.split(";"); // try with semicolon instead
             try {
                 list.add(new LatLng(Double.parseDouble(data[0]), Double.parseDouble(data[1])));
             } catch (Exception nfe) {
