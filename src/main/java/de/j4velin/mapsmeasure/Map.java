@@ -350,7 +350,7 @@ public class Map extends FragmentActivity {
             if (BuildConfig.DEBUG) Logger.log(bpe);
             bpe.printStackTrace();
         }
-        if (PermissionChecker
+        if (Build.VERSION.SDK_INT < 23 || PermissionChecker
                 .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
                 PermissionChecker.PERMISSION_GRANTED) {
             init();
