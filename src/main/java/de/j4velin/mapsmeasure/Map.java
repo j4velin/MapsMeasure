@@ -350,14 +350,7 @@ public class Map extends FragmentActivity {
             if (BuildConfig.DEBUG) Logger.log(bpe);
             bpe.printStackTrace();
         }
-        if (Build.VERSION.SDK_INT < 23 || PermissionChecker
-                .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                PermissionChecker.PERMISSION_GRANTED) {
-            init();
-        } else {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_EXTERNAL_STORAGE_PERMISSION);
-        }
+        init();
     }
 
     /**
@@ -790,17 +783,6 @@ public class Map extends FragmentActivity {
                 if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
                         grantResults[1] == PermissionChecker.PERMISSION_GRANTED) {
                     getCurrentLocation(lastLocationCallback);
-                }
-                break;
-            case REQUEST_EXTERNAL_STORAGE_PERMISSION:
-                if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
-                    init();
-                } else {
-                    if (shouldShowRequestPermissionRationale(permissions[0])) {
-                        Dialogs.getPermissionExplainDialog(this).show();
-                    } else {
-                        finish();
-                    }
                 }
                 break;
             default:
