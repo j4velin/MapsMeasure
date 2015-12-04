@@ -711,9 +711,11 @@ public class Map extends FragmentActivity {
                     }).build();
             mGoogleApiClient.connect();
         } else { // no permission
-            lastLocationCallback = callback;
-            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+            if (Build.VERSION.SDK_INT >= 23) {
+                lastLocationCallback = callback;
+                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+            } else if (BuildConfig.DEBUG) Logger.log("no permission and no way to request them");
         }
     }
 
