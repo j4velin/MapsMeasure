@@ -23,6 +23,7 @@ import android.util.Pair;
 import android.util.TypedValue;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.PolyUtil;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -35,6 +36,7 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
+import java.util.WeakHashMap;
 
 abstract class Util {
 
@@ -42,6 +44,8 @@ abstract class Util {
     public static final String TAG_OPEN = "<elevation>";
     public static final String TAG_CLOSE = "</elevation>";
     public static final int ELEVATION_TRACE_SAMPLES = 20;
+
+    private final static WeakHashMap<LatLng, Float> CACHE = new WeakHashMap<>();
 
     /**
      * Returns the height of the status bar
@@ -144,34 +148,39 @@ abstract class Util {
      * @param loc the location
      * @return a pair of 0's
      */
-    private static Pair<Float, Float> getSingleElevation(LatLng loc) {
-        HttpURLConnection urlConnection = null;
-        BufferedReader in = null;
-        try {
-            URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?locations=" +
-                    loc.latitude + "," + loc.longitude);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-            String line;
-            int subStringStart = TAG_OPEN.length();
-            while ((line = in.readLine()) != null) {
-                if (line.trim().startsWith(TAG_OPEN)) {
-                    lastElevation = Float.parseFloat(
-                            line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
-                    return new Pair<>(0f, 0f);
+    private static Pair<Float, Float> getSingleElevation(final LatLng loc) {
+        if (CACHE.containsKey(loc)) {
+            lastElevation = CACHE.get(loc);
+        } else {
+            HttpURLConnection urlConnection = null;
+            BufferedReader in = null;
+            try {
+                URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?locations=" +
+                        loc.latitude + "," + loc.longitude);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                String line;
+                int subStringStart = TAG_OPEN.length();
+                while ((line = in.readLine()) != null) {
+                    if (line.trim().startsWith(TAG_OPEN)) {
+                        lastElevation = Float.parseFloat(
+                                line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
+                        CACHE.put(loc, lastElevation);
+                        break;
+                    }
                 }
-            }
-        } catch (IOException io) {
-            io.printStackTrace();
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            } catch (IOException io) {
+                io.printStackTrace();
+            } finally {
+                if (in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
+                if (urlConnection != null) urlConnection.disconnect();
             }
-            if (urlConnection != null) urlConnection.disconnect();
         }
         return new Pair<>(0f, 0f);
     }
@@ -186,17 +195,13 @@ abstract class Util {
     static Pair<Float, Float> updateElevationView(final ElevationView view, final List<LatLng> trace) {
         if (trace.isEmpty()) return new Pair<>(0f, 0f);
         if (trace.size() == 1) return getSingleElevation(trace.get(0));
-        StringBuilder path = new StringBuilder();
+        String encodedPath = PolyUtil.encode(trace);
         float[] result = new float[ELEVATION_TRACE_SAMPLES];
-        for (LatLng point : trace) {
-            path.append(point.latitude).append(",").append(point.longitude).append("|");
-        }
-        path.deleteCharAt(path.length() - 1);
         HttpURLConnection urlConnection = null;
         BufferedReader in = null;
         try {
-            URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?path=" +
-                    path.toString() + "&samples=" + ELEVATION_TRACE_SAMPLES);
+            URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?path=enc:" +
+                    encodedPath + "&samples=" + ELEVATION_TRACE_SAMPLES);
             urlConnection = (HttpURLConnection) url.openConnection();
             in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
             String line;
@@ -210,13 +215,13 @@ abstract class Util {
                 }
             }
         } catch (IOException io) {
-            io.printStackTrace();
+            if (BuildConfig.DEBUG) io.printStackTrace();
         } finally {
             if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if (BuildConfig.DEBUG) e.printStackTrace();
                 }
             }
             if (urlConnection != null) urlConnection.disconnect();
