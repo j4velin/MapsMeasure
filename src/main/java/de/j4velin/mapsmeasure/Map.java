@@ -131,7 +131,6 @@ public class Map extends FragmentActivity {
     private final static NumberFormat formatter_no_dec =
             NumberFormat.getInstance(Locale.getDefault());
     private final static int REQUEST_LOCATION_PERMISSION = 0;
-    final static int REQUEST_EXTERNAL_STORAGE_PERMISSION = 1;
 
     final static String SKU = "de.j4velin.mapsmeasure.billing.pro";
 
@@ -694,6 +693,7 @@ public class Map extends FragmentActivity {
      */
     private void getCurrentLocation(final LocationCallback callback) {
         if (hasLocationPermission()) {
+            if (callback == null) return;
             mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
                     .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                         @Override
@@ -787,6 +787,8 @@ public class Map extends FragmentActivity {
                 if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
                         grantResults[1] == PermissionChecker.PERMISSION_GRANTED) {
                     getCurrentLocation(lastLocationCallback);
+                    //noinspection ResourceType
+                    mMap.setMyLocationEnabled(true);
                 }
                 break;
             default:

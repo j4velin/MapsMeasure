@@ -140,6 +140,13 @@ abstract class Dialogs {
 
                 File[] files = c.getDir("traces", Context.MODE_PRIVATE).listFiles();
 
+                if (files == null) {
+                    Toast.makeText(c, c.getString(R.string.dir_read_error,
+                                    c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
                     File ext = c.getExternalFilesDir(null);
                     // even though we checked the external storage state, ext is still sometimes null, accoring to Play Store crash reports
