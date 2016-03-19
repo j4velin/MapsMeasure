@@ -564,7 +564,8 @@ public class Map extends FragmentActivity {
         drawerList.setDivider(null);
         drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(final AdapterView<?> parent, final View view, int position, long id) {
+            public void onItemClick(final AdapterView<?> parent, final View view, int position,
+                                    long id) {
                 switch (position) {
                     case 0: // Search before Android 5.0
                         Dialogs.getSearchDialog(Map.this).show();
@@ -674,7 +675,10 @@ public class Map extends FragmentActivity {
             elevationView.setLayoutParams(elevationParams);
         }
 
-        mMap.setMyLocationEnabled(true);
+        if (hasLocationPermission()) {
+            //noinspection ResourceType
+            mMap.setMyLocationEnabled(true);
+        }
 
         PRO_VERSION |= prefs.getBoolean("pro", false);
         if (!PRO_VERSION) {
@@ -689,15 +693,12 @@ public class Map extends FragmentActivity {
      * @param callback the callback which should be called when we got a location
      */
     private void getCurrentLocation(final LocationCallback callback) {
-        if (PermissionChecker
-                .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PermissionChecker.PERMISSION_GRANTED && PermissionChecker
-                .checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PermissionChecker.PERMISSION_GRANTED) {
+        if (hasLocationPermission()) {
             mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
                     .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                         @Override
                         public void onConnected(final Bundle bundle) {
+                            //noinspection ResourceType
                             Location l = LocationServices.FusedLocationApi
                                     .getLastLocation(mGoogleApiClient);
                             mGoogleApiClient.disconnect();
@@ -779,7 +780,8 @@ public class Map extends FragmentActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, final String[] permissions, final int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, final String[] permissions,
+                                           final int[] grantResults) {
         switch (requestCode) {
             case REQUEST_LOCATION_PERMISSION:
                 if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
@@ -827,5 +829,13 @@ public class Map extends FragmentActivity {
                 }
             }
         }
+    }
+
+    private boolean hasLocationPermission() {
+        return PermissionChecker
+                .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PermissionChecker.PERMISSION_GRANTED && PermissionChecker
+                .checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PermissionChecker.PERMISSION_GRANTED;
     }
 }
