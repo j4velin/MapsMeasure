@@ -95,7 +95,8 @@ abstract class Dialogs {
             @Override
             public void onClick(final View v) {
                 final File destination;
-                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
+                        c.getExternalFilesDir(null) == null) {
                     destination = c.getExternalFilesDir(null);
                 } else {
                     destination = c.getDir("traces", Context.MODE_PRIVATE);
@@ -115,7 +116,7 @@ abstract class Dialogs {
                         try {
                             String fname = ((EditText) layout.findViewById(R.id.filename)).getText()
                                     .toString();
-                            if (fname == null || fname.length() < 1) {
+                            if (fname.length() < 1) {
                                 fname = "MapsMeasure_" + System.currentTimeMillis();
                             }
                             final File f = new File(destination, fname + ".csv");
@@ -150,7 +151,7 @@ abstract class Dialogs {
                 if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
                     File ext = c.getExternalFilesDir(null);
                     // even though we checked the external storage state, ext is still sometimes null, accoring to Play Store crash reports
-                    if (ext != null) {
+                    if (ext != null && ext.listFiles() != null) {
                         File[] filesExtern = ext.listFiles();
                         File[] allFiles = new File[files.length + filesExtern.length];
                         System.arraycopy(files, 0, allFiles, 0, files.length);
