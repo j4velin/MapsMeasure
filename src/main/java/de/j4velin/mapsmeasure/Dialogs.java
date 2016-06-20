@@ -95,14 +95,20 @@ abstract class Dialogs {
             @Override
             public void onClick(final View v) {
                 final File destination;
-                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
-                        c.getExternalFilesDir(null) == null) {
+                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) &&
+                        c.getExternalFilesDir(null) != null) {
                     destination = c.getExternalFilesDir(null);
                 } else {
                     destination = c.getDir("traces", Context.MODE_PRIVATE);
                 }
 
                 d.dismiss();
+                if (destination == null) {
+                    Toast.makeText(c,
+                            c.getString(R.string.error, "Can not access external files directory"),
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
                 AlertDialog.Builder b = new AlertDialog.Builder(c);
                 b.setTitle(R.string.save);
                 final View layout =
@@ -127,7 +133,7 @@ abstract class Dialogs {
                         } catch (Exception e) {
                             if (BuildConfig.DEBUG) Logger.log(e);
                             Toast.makeText(c, c.getString(R.string.error,
-                                            e.getClass().getSimpleName() + "\n" + e.getMessage()),
+                                    e.getClass().getSimpleName() + "\n" + e.getMessage()),
                                     Toast.LENGTH_LONG).show();
                         }
                     }
@@ -143,7 +149,7 @@ abstract class Dialogs {
 
                 if (files == null) {
                     Toast.makeText(c, c.getString(R.string.dir_read_error,
-                                    c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
+                            c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
                             Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -163,7 +169,7 @@ abstract class Dialogs {
 
                 if (files.length == 0) {
                     Toast.makeText(c, c.getString(R.string.no_files_found,
-                                    c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
+                            c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
                             Toast.LENGTH_SHORT).show();
                 } else if (files.length == 1) {
                     try {
@@ -173,7 +179,7 @@ abstract class Dialogs {
                         if (BuildConfig.DEBUG) Logger.log(e);
                         e.printStackTrace();
                         Toast.makeText(c, c.getString(R.string.error,
-                                        e.getClass().getSimpleName() + "\n" + e.getMessage()),
+                                e.getClass().getSimpleName() + "\n" + e.getMessage()),
                                 Toast.LENGTH_LONG).show();
                     }
                 } else {
@@ -218,7 +224,7 @@ abstract class Dialogs {
                     if (BuildConfig.DEBUG) Logger.log(e);
                     e.printStackTrace();
                     Toast.makeText(c, c.getString(R.string.error,
-                                    e.getClass().getSimpleName() + "\n" + e.getMessage()),
+                            e.getClass().getSimpleName() + "\n" + e.getMessage()),
                             Toast.LENGTH_LONG).show();
                 }
             }
