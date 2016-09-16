@@ -20,12 +20,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -56,13 +54,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -86,7 +84,7 @@ import java.util.Stack;
 
 import de.j4velin.mapsmeasure.wrapper.API17Wrapper;
 
-public class Map extends FragmentActivity {
+public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     enum MeasureType {
         DISTANCE, AREA, ELEVATION
@@ -119,6 +117,9 @@ public class Map extends FragmentActivity {
     private GoogleApiClient mGoogleApiClient;
 
     private ElevationView elevationView;
+
+    private boolean navBarOnRight;
+    private int drawerSize, statusbar, navBarHeight;
 
     // store last location callback in case we dont have location permission yet and need to execute it later
     private LocationCallback lastLocationCallback;
@@ -423,62 +424,10 @@ public class Map extends FragmentActivity {
             });
         }
 
-        mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
-                .getMap();
-
-        if (mMap == null) {
-            if (BuildConfig.DEBUG) Logger.log("Map = null - play services available: " +
-                    GooglePlayServicesUtil.isGooglePlayServicesAvailable(this));
-            Dialog d = GooglePlayServicesUtil
-                    .getErrorDialog(GooglePlayServicesUtil.isGooglePlayServicesAvailable(this),
-                            this, 0);
-            d.setOnDismissListener(new OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialog) {
-                    finish();
-                }
-            });
-            d.show();
-            return;
-        }
+        ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+                .getMapAsync(this);
 
         marker = BitmapDescriptorFactory.fromResource(R.drawable.marker);
-        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(final Marker click) {
-                addPoint(click.getPosition());
-                return true;
-            }
-        });
-
-        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
-            @Override
-            public boolean onMyLocationButtonClick() {
-                getCurrentLocation(new LocationCallback() {
-                    @Override
-                    public void gotLocation(final Location location) {
-                        if (location != null) {
-                            LatLng myLocation =
-                                    new LatLng(location.getLatitude(), location.getLongitude());
-                            double distance = SphericalUtil.computeDistanceBetween(myLocation,
-                                    mMap.getCameraPosition().target);
-
-                            // Only if the distance is less than 50cm we are on our location, add the marker
-                            if (distance < 0.5) {
-                                Toast.makeText(Map.this, R.string.marker_on_current_location,
-                                        Toast.LENGTH_SHORT).show();
-                                addPoint(myLocation);
-                            } else {
-                                if (BuildConfig.DEBUG)
-                                    Logger.log("location accuracy too bad to add point");
-                                moveCamera(myLocation);
-                            }
-                        }
-                    }
-                });
-                return true;
-            }
-        });
 
         // check if open with csv file
         if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
@@ -549,12 +498,6 @@ public class Map extends FragmentActivity {
             }
         });
 
-        mMap.setOnMapClickListener(new OnMapClickListener() {
-            @Override
-            public void onMapClick(final LatLng center) {
-                addPoint(center);
-            }
-        });
 
         // Drawer stuff
         ListView drawerList = (ListView) findViewById(R.id.left_drawer);
@@ -622,14 +565,13 @@ public class Map extends FragmentActivity {
             }
         });
 
-        changeView(prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
         changeType(MeasureType.DISTANCE);
 
         // KitKat translucent decor enabled? -> Add some margin/padding to the
-        // drawer and the map
+        // drawer
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
 
-            int statusbar = Util.getStatusBarHeight(this);
+            statusbar = Util.getStatusBarHeight(this);
 
             FrameLayout.LayoutParams lp =
                     (FrameLayout.LayoutParams) topCenterOverlay.getLayoutParams();
@@ -639,7 +581,7 @@ public class Map extends FragmentActivity {
             // on most devices and in most orientations, the navigation bar
             // should be at the bottom and therefore reduces the available
             // display height
-            int navBarHeight = Util.getNavigationBarHeight(this);
+            navBarHeight = Util.getNavigationBarHeight(this);
 
             DisplayMetrics total, available;
             total = new DisplayMetrics();
@@ -647,24 +589,22 @@ public class Map extends FragmentActivity {
             getWindowManager().getDefaultDisplay().getMetrics(available);
             API17Wrapper.getRealMetrics(getWindowManager().getDefaultDisplay(), total);
 
-            boolean navBarOnRight = getResources().getConfiguration().orientation ==
+            navBarOnRight = getResources().getConfiguration().orientation ==
                     android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
                     (total.widthPixels - available.widthPixels > 0);
 
             FrameLayout.LayoutParams elevationParams =
                     (FrameLayout.LayoutParams) elevationView.getLayoutParams();
 
-            int drawerSize = mDrawerLayout == null ? Util.dpToPx(this, 200) : 0;
+            drawerSize = mDrawerLayout == null ? Util.dpToPx(this, 200) : 0;
 
             if (navBarOnRight) {
                 // in landscape on phones, the navigation bar might be at the
                 // right side, reducing the available display width
-                mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
                 drawerList.setPadding(0, statusbar + 10, 0, 0);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
                 elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
             } else {
-                mMap.setPadding(0, statusbar, 0, navBarHeight);
                 drawerList.setPadding(0, statusbar + 10, 0, 0);
                 drawerListAdapert.setMarginBottom(navBarHeight);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
@@ -674,15 +614,78 @@ public class Map extends FragmentActivity {
             elevationView.setLayoutParams(elevationParams);
         }
 
-        if (hasLocationPermission()) {
-            //noinspection ResourceType
-            mMap.setMyLocationEnabled(true);
-        }
-
         PRO_VERSION |= prefs.getBoolean("pro", false);
         if (!PRO_VERSION) {
             bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND")
                     .setPackage("com.android.vending"), mServiceConn, Context.BIND_AUTO_CREATE);
+        }
+    }
+
+    @Override
+    public void onMapReady(final GoogleMap googleMap) {
+        mMap = googleMap;
+
+        changeView(getSharedPreferences("settings", Context.MODE_PRIVATE)
+                .getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
+
+        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(final Marker click) {
+                addPoint(click.getPosition());
+                return true;
+            }
+        });
+
+        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+                getCurrentLocation(new LocationCallback() {
+                    @Override
+                    public void gotLocation(final Location location) {
+                        if (location != null) {
+                            LatLng myLocation =
+                                    new LatLng(location.getLatitude(), location.getLongitude());
+                            double distance = SphericalUtil.computeDistanceBetween(myLocation,
+                                    mMap.getCameraPosition().target);
+
+                            // Only if the distance is less than 50cm we are on our location, add the marker
+                            if (distance < 0.5) {
+                                Toast.makeText(Map.this, R.string.marker_on_current_location,
+                                        Toast.LENGTH_SHORT).show();
+                                addPoint(myLocation);
+                            } else {
+                                if (BuildConfig.DEBUG)
+                                    Logger.log("location accuracy too bad to add point");
+                                moveCamera(myLocation);
+                            }
+                        }
+                    }
+                });
+                return true;
+            }
+        });
+
+        mMap.setOnMapClickListener(new OnMapClickListener() {
+            @Override
+            public void onMapClick(final LatLng center) {
+                addPoint(center);
+            }
+        });
+
+        if (hasLocationPermission()) {
+            //noinspection MissingPermission
+            mMap.setMyLocationEnabled(true);
+        }
+
+        // KitKat translucent decor enabled? -> Add some margin/padding to the map
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+            if (navBarOnRight) {
+                // in landscape on phones, the navigation bar might be at the
+                // right side, reducing the available display width
+                mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
+            } else {
+                mMap.setPadding(0, statusbar, 0, navBarHeight);
+            }
         }
     }
 
@@ -751,7 +754,7 @@ public class Map extends FragmentActivity {
      *                GoogleMap.MAP_TYPE_HYBRID or GoogleMap.MAP_TYPE_TERRAIN
      */
     private void changeView(int newView) {
-        mMap.setMapType(newView);
+        if (mMap != null) mMap.setMapType(newView);
         drawerListAdapert.changeView(newView);
         if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
         getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putInt("mapView", newView)
