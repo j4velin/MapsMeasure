@@ -128,8 +128,7 @@ abstract class Dialogs {
                             final File f = new File(destination, fname + ".csv");
                             Util.saveToFile(f, trace);
                             d.dismiss();
-                            Toast.makeText(c, c.getString(R.string.file_saved, f.getAbsolutePath()),
-                                    Toast.LENGTH_SHORT).show();
+                            Toast.makeText(c, R.string.file_saved, Toast.LENGTH_SHORT).show();
                         } catch (Exception e) {
                             if (BuildConfig.DEBUG) Logger.log(e);
                             Toast.makeText(c, c.getString(R.string.error,

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
     <LinearLayout
         android:id="@+id/close"
@@ -10,14 +10,14 @@
         android:layout_gravity="center_horizontal"
         android:minWidth="200dp"
         android:orientation="vertical"
-        android:padding="10dp" >
+        android:padding="10dp">
 
         <CheckBox
             android:id="@+id/metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/metric"
-            android:textAppearance="?android:textAppearanceMedium" />
+            android:textAppearance="?android:textAppearanceMedium"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -27,14 +27,15 @@
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
             android:text="@string/measure_distance"
-            android:textAppearance="?android:textAppearanceMedium" />
+            android:textAppearance="?android:textAppearanceMedium"/>
 
         <TextView
             android:id="@+id/distance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
             android:layout_marginStart="20dp"
-            android:textAppearance="?android:textAppearanceSmall" />
+            android:textAppearance="?android:textAppearanceSmall"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -44,14 +45,15 @@
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
             android:text="@string/measure_area"
-            android:textAppearance="?android:textAppearanceMedium" />
+            android:textAppearance="?android:textAppearanceMedium"/>
 
         <TextView
             android:id="@+id/area"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
             android:layout_marginStart="20dp"
-            android:textAppearance="?android:textAppearanceSmall" />
+            android:textAppearance="?android:textAppearanceSmall"/>
     </LinearLayout>
 
 </ScrollView>
