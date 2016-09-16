@@ -52,8 +52,12 @@ android {
             debuggable true
         }
     }
-    lintOptions {
-        ignoreWarnings true
+
+    if (System.getenv("TRAVIS")) {
+        lintOptions {
+            ignoreWarnings true
+            abortOnError false
+        }
     }
 }
 
