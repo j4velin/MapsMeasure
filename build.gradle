@@ -7,7 +7,7 @@ buildscript {
             classpath rootProject.ext.gradle_classpath
         } else {
             logger.warn('classpath not found in rootProject')
-            classpath 'com.android.tools.build:gradle:1.2.3'
+            classpath 'com.android.tools.build:gradle:2.1.3'
         }
     }
 }
@@ -59,7 +59,13 @@ dependencies {
 
 def props = new Properties()
 
-props.load(new FileInputStream(project.file("key.properties")))
+if (project.file("key.properties").exists()) {
+    props.load(new FileInputStream(project.file("key.properties")))
+} else {
+    logger.warn('Using sample keystore!!')
+    props.load(new FileInputStream(project.file("key.properties.sample")))
+    resValue "string", "maps_api_key", "0000"
+}
 
 android.signingConfigs.release.storeFile project.file(props.keyStore)
 
