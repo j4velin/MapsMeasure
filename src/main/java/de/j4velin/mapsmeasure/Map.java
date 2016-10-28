@@ -64,6 +64,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -729,7 +730,17 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
      * @param pos the position to move to
      */
     public void moveCamera(final LatLng pos) {
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, 16));
+        moveCamera(pos, 16f);
+    }
+
+    /**
+     * Moves the map view to the given position
+     *
+     * @param pos  the position to move to
+     * @param zoom the zoom to apply
+     */
+    private void moveCamera(final LatLng pos, float zoom) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, zoom));
     }
 
     /**
@@ -787,11 +798,26 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                                            final int[] grantResults) {
         switch (requestCode) {
             case REQUEST_LOCATION_PERMISSION:
-                if (grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
                         grantResults[1] == PermissionChecker.PERMISSION_GRANTED) {
                     getCurrentLocation(lastLocationCallback);
                     //noinspection ResourceType
                     mMap.setMyLocationEnabled(true);
+                } else {
+                    String savedLocation = getSharedPreferences("settings", Context.MODE_PRIVATE)
+                            .getString("lastLocation", null);
+                    if (savedLocation != null && savedLocation.contains("#")) {
+                        String[] data = savedLocation.split("#");
+                        try {
+                            if (data.length == 3) {
+                                moveCamera(new LatLng(Double.parseDouble(data[0]),
+                                        Double.parseDouble(data[1])), Float.parseFloat(data[2]));
+                            }
+                        } catch (NumberFormatException nfe) {
+                            nfe.printStackTrace();
+                        }
+                    }
                 }
                 break;
             default:
@@ -810,6 +836,10 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        CameraPosition lastPosition = mMap.getCameraPosition();
+        getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("lastLocation",
+                lastPosition.target.latitude + "#" + lastPosition.target.longitude + "#" +
+                        lastPosition.zoom).commit();
         if (mService != null) {
             unbindService(mServiceConn);
         }
