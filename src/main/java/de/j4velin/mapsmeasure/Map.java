@@ -428,8 +428,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                 .getMapAsync(this);
 
-        marker = BitmapDescriptorFactory.fromResource(R.drawable.marker);
-
         // check if open with csv file
         if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
             try {
@@ -625,6 +623,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
+        marker = BitmapDescriptorFactory.fromResource(R.drawable.marker);
 
         changeView(getSharedPreferences("settings", Context.MODE_PRIVATE)
                 .getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
