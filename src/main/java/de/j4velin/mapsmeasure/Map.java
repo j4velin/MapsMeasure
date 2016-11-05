@@ -428,29 +428,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                 .getMapAsync(this);
 
-        // check if open with csv file
-        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-            try {
-                Util.loadFromFile(getIntent().getData(), this);
-            } catch (IOException e) {
-                if (BuildConfig.DEBUG) Logger.log(e);
-                Toast.makeText(this, getString(R.string.error,
-                        e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
-                        .show();
-                e.printStackTrace();
-            }
-        } else {
-            // dont move to current position if started with a csv file
-            getCurrentLocation(new LocationCallback() {
-                @Override
-                public void gotLocation(final Location location) {
-                    if (location != null && mMap.getCameraPosition().zoom <= 2) {
-                        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()));
-                    }
-                }
-            });
-        }
-
         valueTv = (TextView) findViewById(R.id.distance);
         updateValueText();
         valueTv.setOnClickListener(new OnClickListener() {
@@ -687,6 +664,29 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 mMap.setPadding(0, statusbar, 0, navBarHeight);
             }
         }
+
+        // check if open with csv file
+        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+            try {
+                Util.loadFromFile(getIntent().getData(), this);
+            } catch (IOException e) {
+                if (BuildConfig.DEBUG) Logger.log(e);
+                Toast.makeText(this, getString(R.string.error,
+                        e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
+                        .show();
+                e.printStackTrace();
+            }
+        } else {
+            // dont move to current position if started with a csv file
+            getCurrentLocation(new LocationCallback() {
+                @Override
+                public void gotLocation(final Location location) {
+                    if (location != null && mMap.getCameraPosition().zoom <= 2) {
+                        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()));
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -835,10 +835,15 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CameraPosition lastPosition = mMap.getCameraPosition();
-        getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("lastLocation",
-                lastPosition.target.latitude + "#" + lastPosition.target.longitude + "#" +
-                        lastPosition.zoom).commit();
+        if (mMap != null) {
+            CameraPosition lastPosition = mMap.getCameraPosition();
+            if (lastPosition != null) {
+                getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
+                        .putString("lastLocation", lastPosition.target.latitude + "#" + lastPosition.target.longitude +
+                                "#" +
+                                lastPosition.zoom).commit();
+            }
+        }
         if (mService != null) {
             unbindService(mServiceConn);
         }
