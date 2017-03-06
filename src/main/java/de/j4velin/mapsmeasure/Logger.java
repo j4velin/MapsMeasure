@@ -16,7 +16,6 @@
 
 package de.j4velin.mapsmeasure;
 
-import android.database.Cursor;
 import android.os.Environment;
 
 import java.io.File;
@@ -37,23 +36,6 @@ public abstract class Logger {
         for (StackTraceElement ste : ex.getStackTrace()) {
             log(ste.toString());
         }
-    }
-
-    public static void log(final Cursor c) {
-        if (!BuildConfig.DEBUG) return;
-        c.moveToFirst();
-        String title = "";
-        for (int i = 0; i < c.getColumnCount(); i++)
-            title += c.getColumnName(i) + " | ";
-        log(title);
-        while (!c.isAfterLast()) {
-            title = "";
-            for (int i = 0; i < c.getColumnCount(); i++)
-                title += c.getString(i) + " | ";
-            log(title);
-            c.moveToNext();
-        }
-        c.close();
     }
 
     @SuppressWarnings("deprecation")

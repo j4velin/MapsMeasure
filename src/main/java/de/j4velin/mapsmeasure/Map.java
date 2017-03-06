@@ -433,12 +433,19 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         valueTv.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (type == MeasureType.DISTANCE) changeType(MeasureType.AREA);
-                    // only switch to elevation mode is an internet connection is
-                    // available and user has access to this feature
+                if (type == MeasureType.DISTANCE) {
+                    changeType(MeasureType.AREA);
+                }
+                // only switch to elevation mode is an internet connection is
+                // available and user has access to this feature
                 else if (type == MeasureType.AREA && Util.checkInternetConnection(Map.this) &&
-                        PRO_VERSION) changeType(MeasureType.ELEVATION);
-                else changeType(MeasureType.DISTANCE);
+                        PRO_VERSION) {
+                    changeType(MeasureType.ELEVATION);
+                } else {
+                    if (BuildConfig.DEBUG) Logger.log("internet connection available: " +
+                            Util.checkInternetConnection(Map.this));
+                    changeType(MeasureType.DISTANCE);
+                }
             }
         });
 
@@ -839,9 +846,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             CameraPosition lastPosition = mMap.getCameraPosition();
             if (lastPosition != null) {
                 getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                        .putString("lastLocation", lastPosition.target.latitude + "#" + lastPosition.target.longitude +
-                                "#" +
-                                lastPosition.zoom).commit();
+                        .putString("lastLocation",
+                                lastPosition.target.latitude + "#" + lastPosition.target.longitude +
+                                        "#" + lastPosition.zoom).commit();
             }
         }
         if (mService != null) {

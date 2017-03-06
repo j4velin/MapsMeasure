@@ -166,17 +166,18 @@ abstract class Util {
                         lastElevation = Float.parseFloat(
                                 line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
                         CACHE.put(loc, lastElevation);
+                        if (BuildConfig.DEBUG) Logger.log("elevation read: " + line);
                         break;
                     }
                 }
             } catch (IOException io) {
-                io.printStackTrace();
+                if (BuildConfig.DEBUG) Logger.log(io);
             } finally {
                 if (in != null) {
                     try {
                         in.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        if (BuildConfig.DEBUG) Logger.log(e);
                     }
                 }
                 if (urlConnection != null) urlConnection.disconnect();
@@ -192,7 +193,8 @@ abstract class Util {
      * @param trace the points
      * @return the aggregated up and down distances along the trace
      */
-    static Pair<Float, Float> updateElevationView(final ElevationView view, final List<LatLng> trace) {
+    static Pair<Float, Float> updateElevationView(final ElevationView view,
+                                                  final List<LatLng> trace) {
         if (trace.isEmpty()) return new Pair<>(0f, 0f);
         if (trace.size() == 1) return getSingleElevation(trace.get(0));
         String encodedPath = PolyUtil.encode(trace);
@@ -212,16 +214,17 @@ abstract class Util {
                     result[pos] = Float.parseFloat(
                             line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
                     pos++;
+                    if (BuildConfig.DEBUG) Logger.log("elevation result: " + line);
                 }
             }
         } catch (IOException io) {
-            if (BuildConfig.DEBUG) io.printStackTrace();
+            if (BuildConfig.DEBUG) Logger.log(io);
         } finally {
             if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
-                    if (BuildConfig.DEBUG) e.printStackTrace();
+                    if (BuildConfig.DEBUG) Logger.log(e);
                 }
             }
             if (urlConnection != null) urlConnection.disconnect();
