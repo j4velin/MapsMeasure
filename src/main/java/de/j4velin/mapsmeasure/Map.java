@@ -36,7 +36,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v4.BuildConfig;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.PermissionChecker;
 import android.support.v4.view.GravityCompat;
@@ -345,11 +344,15 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @SuppressLint("NewApi")
     @Override
     public void onCreate(final Bundle savedInstanceState) {
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= 23 && PermissionChecker
+                .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                PermissionChecker.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+        }
         try {
             super.onCreate(savedInstanceState);
         } catch (final BadParcelableException bpe) {
             if (BuildConfig.DEBUG) Logger.log(bpe);
-            bpe.printStackTrace();
         }
         init();
     }
