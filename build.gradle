@@ -61,6 +61,13 @@ android {
     }
 }
 
+repositories {
+    jcenter()
+    maven {
+        url "https://maven.google.com"
+    }
+}
+
 dependencies {
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.google.android.gms:play-services-location:11.0.1'
