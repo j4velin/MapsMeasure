@@ -514,7 +514,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                         if (PRO_VERSION) {
                             changeType(MeasureType.ELEVATION);
                         } else {
-                            Dialogs.getElevationAccessDialog(Map.this, mService).show();
+                            Dialogs.showElevationAccessDialog(Map.this, mService);
                         }
                         break;
                     case 7: // map

@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v4.BuildConfig;
 import android.support.v4.content.FileProvider;
 import android.text.method.LinkMovementMethod;
@@ -46,6 +48,8 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Stack;
 
 abstract class Dialogs {
@@ -196,8 +200,8 @@ abstract class Dialogs {
                                 if (BuildConfig.DEBUG) Logger.log(e);
                                 e.printStackTrace();
                                 Toast.makeText(c, c.getString(R.string.error,
-                                        e.getClass().getSimpleName() + "\n" +
-                                                e.getMessage()), Toast.LENGTH_LONG).show();
+                                        e.getClass().getSimpleName() + "\n" + e.getMessage()),
+                                        Toast.LENGTH_LONG).show();
                             }
                         }
                     });
@@ -252,24 +256,20 @@ abstract class Dialogs {
                 m.updateValueText();
             }
         });
-        ((TextView) d.findViewById(R.id.distance))
-                .setText(Map.formatter_two_dec.format(Math.max(0, distance)) + " m\n" +
+        ((TextView) d.findViewById(R.id.distance)).setText(
+                Map.formatter_two_dec.format(Math.max(0, distance)) + " m\n" +
                         Map.formatter_two_dec.format(distance / 1000) + " km\n\n" +
-                        Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)) +
-                        " ft\n" +
-                        Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)) +
-                        " yd\n" +
+                        Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft\n" +
+                        Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)) + " yd\n" +
                         Map.formatter_two_dec.format(distance / 1609.344f) + " mi\n" +
                         Map.formatter_two_dec.format(distance / 1852f) + " nautical miles");
 
-        ((TextView) d.findViewById(R.id.area))
-                .setText(Map.formatter_two_dec.format(Math.max(0, area)) + " m²\n" +
+        ((TextView) d.findViewById(R.id.area)).setText(
+                Map.formatter_two_dec.format(Math.max(0, area)) + " m²\n" +
                         Map.formatter_two_dec.format(area / 10000) + " ha\n" +
                         Map.formatter_two_dec.format(area / 1000000) + " km²\n\n" +
-                        Map.formatter_two_dec.format(Math.max(0, area / 0.09290304d)) +
-                        " ft²\n" +
-                        Map.formatter_two_dec.format(area / 4046.8726099d) +
-                        " ac (U.S. Survey)\n" +
+                        Map.formatter_two_dec.format(Math.max(0, area / 0.09290304d)) + " ft²\n" +
+                        Map.formatter_two_dec.format(area / 4046.8726099d) + " ac (U.S. Survey)\n" +
                         Map.formatter_two_dec.format(area / 2589988.110336d) + " mi²");
         d.findViewById(R.id.close).setOnClickListener(new OnClickListener() {
             @Override
@@ -299,41 +299,67 @@ abstract class Dialogs {
     }
 
     /**
-     * @param c the Context
-     * @return a dialog allowing the user to gain access to the evelation
-     * feature
+     * Shows the dialog to unlock the elevation feature
+     *
+     * @param c       the map activity
+     * @param service the billing service
      */
-    public static Dialog getElevationAccessDialog(final Map c, final IInAppBillingService service) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(c);
-        builder.setMessage(R.string.buy_pro);
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+    public static void showElevationAccessDialog(final Map c, final IInAppBillingService service) {
+        final ProgressDialog pg = new ProgressDialog(c);
+        pg.setMessage("Loading...");
+        pg.show();
+        final Handler h = new Handler();
+        isGoogleAvailable(new Callback() {
             @Override
-            public void onClick(final DialogInterface dialog, int which) {
-                try {
-                    Bundle buyIntentBundle =
-                            service.getBuyIntent(3, c.getPackageName(), Map.SKU, "inapp",
-                                    c.getPackageName());
-                    if (buyIntentBundle.getInt("RESPONSE_CODE") == 0) {
-                        PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
-                        c.startIntentSenderForResult(pendingIntent.getIntentSender(), 42, null, 0,
-                                0, 0);
+            public void result(final boolean available) {
+                h.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        pg.dismiss();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(c);
+                        if (!available) {
+                            builder.setMessage(R.string.no_google_connection);
+                        } else {
+                            builder.setMessage(R.string.buy_pro);
+                            builder.setPositiveButton(android.R.string.ok,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(final DialogInterface dialog,
+                                                            int which) {
+                                            try {
+                                                Bundle buyIntentBundle =
+                                                        service.getBuyIntent(3, c.getPackageName(),
+                                                                Map.SKU, "inapp",
+                                                                c.getPackageName());
+                                                if (buyIntentBundle.getInt("RESPONSE_CODE") == 0) {
+                                                    PendingIntent pendingIntent = buyIntentBundle
+                                                            .getParcelable("BUY_INTENT");
+                                                    c.startIntentSenderForResult(
+                                                            pendingIntent.getIntentSender(), 42,
+                                                            null, 0, 0, 0);
+                                                }
+                                            } catch (Exception e) {
+                                                if (BuildConfig.DEBUG) Logger.log(e);
+                                                Toast.makeText(c, e.getClass().getName() + ": " +
+                                                        e.getMessage(), Toast.LENGTH_LONG).show();
+                                                e.printStackTrace();
+                                            }
+                                            dialog.dismiss();
+                                        }
+                                    });
+                        }
+                        builder.setNegativeButton(android.R.string.cancel,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(final DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                        builder.create().show();
                     }
-                } catch (Exception e) {
-                    if (BuildConfig.DEBUG) Logger.log(e);
-                    Toast.makeText(c, e.getClass().getName() + ": " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
-                }
-                dialog.dismiss();
+                });
             }
         });
-        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(final DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        return builder.create();
     }
 
     /**
@@ -372,5 +398,31 @@ abstract class Dialogs {
             }
         });
         return builder.create();
+    }
+
+    private static void isGoogleAvailable(final Callback callback) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                HttpURLConnection urlConnection = null;
+                try {
+                    URL url = new URL("http://maps.googleapis.com");
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setConnectTimeout(5000);
+                    urlConnection.connect();
+                    callback.result(true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    if (BuildConfig.DEBUG) Logger.log(e);
+                    callback.result(false);
+                } finally {
+                    if (urlConnection != null) urlConnection.disconnect();
+                }
+            }
+        }).start();
+    }
+
+    private interface Callback {
+        void result(boolean available);
     }
 }

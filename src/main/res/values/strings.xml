@@ -35,4 +35,5 @@
     <string name="file_path">File will be saved here: %s</string>
     <string name="dir_read_error">Error reading directory %s</string>
     <string name="marker_on_current_location">A marker was added on your current location</string>
+    <string name="no_google_connection">Can not reach Google server to query for elevation information - please check your internet connection</string>
 </resources>
