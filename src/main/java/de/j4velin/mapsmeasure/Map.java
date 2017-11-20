@@ -808,8 +808,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         switch (requestCode) {
             case REQUEST_LOCATION_PERMISSION:
                 if (grantResults.length > 0 &&
-                        grantResults[0] == PermissionChecker.PERMISSION_GRANTED &&
-                        grantResults[1] == PermissionChecker.PERMISSION_GRANTED) {
+                        grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
                     getCurrentLocation(lastLocationCallback);
                     //noinspection ResourceType
                     mMap.setMyLocationEnabled(true);
