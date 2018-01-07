@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="section_measure">Mesure</string>
+    <string name="section_mapview">Type de carte</string>
+    <string name="measure_distance">Distance</string>
+    <string name="measure_area">Superficie</string>
+    <string name="measure_elevation">Dénivelé</string>
+    <string name="mapview_map">Carte</string>
+    <string name="mapview_satellite">Satellite</string>
+    <string name="mapview_terrain">Terrain</string>
+    <string name="metric">Unités métriques</string>
+    <string name="about">À propos</string>
+    <string name="about_text">Cette appli a été créée par Thomas Hoffmann (<a href="http://www.j4velin.de">www.j4velin.de</a>) et elle utilise la \'Google Maps API v2\'.\n\nMaps Measure est open source ! Obtenez le code source sur <a href="https://github.com/j4velin/MapsMeasure">GitHub</a>.\n\n</string>
+    <string name="app_version">Version de l\'appli : %s</string>
+    <string name="moreapps">Plus d\'Applis</string>
+    <string name="delete">effacer</string>
+    <string name="delete_all">Effacer les %d points?</string>
+    <string name="no_location_found">Aucun emplacement trouvé</string>
+    <string name="units">Unités</string>
+    <string name="savenshare">Sauv. &amp; partager</string>
+    <string name="save">Sauvegarder</string>
+    <string name="load">Charger</string>
+    <string name="share">Partager</string>
+    <string name="file_saved">Fichier enregistré</string>
+    <string name="error">Erreur : %s</string>
+    <string name="select_file">Sélection d\un fichier</string>
+    <string name="no_files_found">Aucun fichier trouvé dans %s</string>
+    <string name="elevation_error">Une erreur s\'est produite lors de la connexion à l\'API Google Evelation : serveur actuellement indisponible ou limite de demande quotidienne atteinte</string>
+    <string name="elevation_error_no_connection">Pas de connexion Internet : l\'application doit interroger l\'API Google Elevation pour obtenir des données d\'altitude et nécessite donc une connexion Internet active pour calculer ces données d\'altitude</string>
+    <string name="buy_pro">Cette fonctionnalité n\'est actuellement pas disponible dans la version gratuite de l\'application. Voulez-vous passer à la version pro maintenant?</string>
+    <string name="file_name">Nom du Fichier (optionnel)</string>
+    <string name="file_path">Le fichier sera sauvegardé ici : %s</string>
+    <string name="dir_read_error">Erreur de lecture du répertoire %s</string>
+    <string name="marker_on_current_location">Un marqueur a été ajouté sur votre position actuelle</string>
+    <string name="no_google_connection">Impossible de contacter le serveur Google pour obtenir des informations sur l\'altitude. Veuillez vérifier votre connexion Internet</string>
+</resources>
