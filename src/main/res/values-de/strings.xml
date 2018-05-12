@@ -30,5 +30,8 @@
     <string name="buy_pro">Diese Funktion ist momentan nicht in der kostenlosen Version der App verfügbar. Jetzt auf die Pro-Version upgraden?</string>
     <string name="file_name">Dateiname (optional)</string>
     <string name="file_path">Datei wird hier gespeichert: %s</string>
+    <string name="dir_read_error">Fehler beim Lesen des Ordners %s</string>
+    <string name="marker_on_current_location">Markierung wurde am aktuellen Standort gesetzt</string>
+    <string name="no_google_connection">Verbindung zu Google Server zur Abfrage der Höhenmeter kann nicht hergestellt werden - bitte überprüfe deine Internet-Verbindung!</string>
 
 </resources>
