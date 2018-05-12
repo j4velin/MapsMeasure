@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 Thomas Hoffmann
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,6 +112,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     private IInAppBillingService mService;
     private static boolean PRO_VERSION = false;
+    static String ELEVATION_API_KEY;
 
     private DrawerListAdapter drawerListAdapert;
     private GoogleApiClient mGoogleApiClient;
@@ -218,20 +219,30 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        altitude = Util.updateElevationView(elevationView, trace);
-                        h.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (isFinishing()) return;
-                                if (altitude == null) {
-                                    Dialogs.getElevationErrorDialog(Map.this).show();
-                                    changeType(MeasureType.DISTANCE);
-                                } else {
-                                    updateValueText();
-                                    elevationView.invalidate();
+                        try {
+                            altitude = Util.updateElevationView(elevationView, trace, null);
+                            h.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (isFinishing()) return;
+                                    if (altitude == null) {
+                                        Dialogs.getElevationErrorDialog(Map.this).show();
+                                        changeType(MeasureType.DISTANCE);
+                                    } else {
+                                        updateValueText();
+                                        elevationView.invalidate();
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        } catch (IOException e) {
+                            h.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (isFinishing()) return;
+                                    Dialogs.getElevationErrorDialog(Map.this).show();
+                                }
+                            });
+                        }
                     }
                 }).start();
                 return "Loading...";
@@ -369,6 +380,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         formatter_two_dec.setMaximumFractionDigits(2);
 
         final SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
+
+        ELEVATION_API_KEY =
+                prefs.getString("elevation_api_key", getString(R.string.elevation_api_key));
 
         // use metric a the default everywhere, except in the US
         metric = prefs.getBoolean("metric", !Locale.getDefault().equals(Locale.US));

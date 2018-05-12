@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 Thomas Hoffmann
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,9 +41,12 @@ import java.util.WeakHashMap;
 abstract class Util {
 
     public static float lastElevation;
-    public static final String TAG_OPEN = "<elevation>";
-    public static final String TAG_CLOSE = "</elevation>";
-    public static final int ELEVATION_TRACE_SAMPLES = 20;
+    private static final String TAG_OPEN = "<elevation>";
+    private static final String TAG_CLOSE = "</elevation>";
+    private static final String ERROR_OPEN = "<error_message>";
+    private static final String ERROR_CLOSE = "</error_message>";
+    private static final String STATUS_OVER_LIMIT = "OVER_QUERY_LIMIT";
+    private static final int ELEVATION_TRACE_SAMPLES = 20;
 
     private final static WeakHashMap<LatLng, Float> CACHE = new WeakHashMap<>();
 
@@ -148,30 +151,40 @@ abstract class Util {
      * @param loc the location
      * @return a pair of 0's
      */
-    private static Pair<Float, Float> getSingleElevation(final LatLng loc) {
+    private static Pair<Float, Float> getSingleElevation(final LatLng loc, String key) throws
+            IOException {
+        if (BuildConfig.DEBUG) Logger.log("get elevation for " + loc);
         if (CACHE.containsKey(loc)) {
             lastElevation = CACHE.get(loc);
+            if (BuildConfig.DEBUG) Logger.log("cache -> " + lastElevation);
         } else {
             HttpURLConnection urlConnection = null;
             BufferedReader in = null;
             try {
-                URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?locations=" +
-                        loc.latitude + "," + loc.longitude);
+                URL url = new URL("https://maps.googleapis.com/maps/api/elevation/xml?locations=" +
+                        loc.latitude + "," + loc.longitude + (key != null ? "&key=" + key : ""));
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
                 String line;
                 int subStringStart = TAG_OPEN.length();
                 while ((line = in.readLine()) != null) {
-                    if (line.trim().startsWith(TAG_OPEN)) {
+                    if (line.contains(STATUS_OVER_LIMIT) && key == null) {
+                        if (BuildConfig.DEBUG) Logger.log("limit reached, try with api key...");
+                        return getSingleElevation(loc, Map.ELEVATION_API_KEY);
+                    } else if (line.trim().startsWith(ERROR_OPEN)) {
+                        String error =
+                                line.substring(ERROR_OPEN.length() + 1, line.indexOf(ERROR_CLOSE));
+                        if (BuildConfig.DEBUG) Logger.log("error: " + error);
+                        throw new IOException(error);
+                    } else if (line.trim().startsWith(TAG_OPEN)) {
                         lastElevation = Float.parseFloat(
                                 line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
                         CACHE.put(loc, lastElevation);
-                        if (BuildConfig.DEBUG) Logger.log("elevation read: " + line);
+                        if (BuildConfig.DEBUG)
+                            Logger.log("elevation read: " + line + " " + lastElevation);
                         break;
                     }
                 }
-            } catch (IOException io) {
-                if (BuildConfig.DEBUG) Logger.log(io);
             } finally {
                 if (in != null) {
                     try {
@@ -194,31 +207,40 @@ abstract class Util {
      * @return the aggregated up and down distances along the trace
      */
     static Pair<Float, Float> updateElevationView(final ElevationView view,
-                                                  final List<LatLng> trace) {
+                                                  final List<LatLng> trace, String key) throws
+            IOException {
+        if (BuildConfig.DEBUG) Logger.log("get elevation for trace " + trace);
         if (trace.isEmpty()) return new Pair<>(0f, 0f);
-        if (trace.size() == 1) return getSingleElevation(trace.get(0));
+        if (trace.size() == 1) return getSingleElevation(trace.get(0), key);
         String encodedPath = PolyUtil.encode(trace);
         float[] result = new float[ELEVATION_TRACE_SAMPLES];
         HttpURLConnection urlConnection = null;
         BufferedReader in = null;
         try {
-            URL url = new URL("http://maps.googleapis.com/maps/api/elevation/xml?path=enc:" +
-                    encodedPath + "&samples=" + ELEVATION_TRACE_SAMPLES);
+            URL url = new URL("https://maps.googleapis.com/maps/api/elevation/xml?path=enc:" +
+                    encodedPath + "&samples=" + ELEVATION_TRACE_SAMPLES +
+                    (key != null ? "&key=" + key : ""));
             urlConnection = (HttpURLConnection) url.openConnection();
             in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
             String line;
             int pos = 0;
             int subStringStart = TAG_OPEN.length();
             while ((line = in.readLine()) != null) {
-                if (line.trim().startsWith(TAG_OPEN)) {
+                if (line.contains(STATUS_OVER_LIMIT) && key == null) {
+                    if (BuildConfig.DEBUG) Logger.log("limit reached, try with api key...");
+                    return updateElevationView(view, trace, Map.ELEVATION_API_KEY);
+                } else if (line.trim().startsWith(ERROR_OPEN)) {
+                    String error =
+                            line.substring(ERROR_OPEN.length() + 1, line.indexOf(ERROR_CLOSE));
+                    if (BuildConfig.DEBUG) Logger.log("error: " + error);
+                    throw new IOException(error);
+                } else if (line.trim().startsWith(TAG_OPEN)) {
                     result[pos] = Float.parseFloat(
                             line.substring(subStringStart + 2, line.indexOf(TAG_CLOSE)));
+                    if (BuildConfig.DEBUG) Logger.log("result[" + pos + "]=" + result[pos]);
                     pos++;
-                    if (BuildConfig.DEBUG) Logger.log("elevation result: " + line);
                 }
             }
-        } catch (IOException io) {
-            if (BuildConfig.DEBUG) Logger.log(io);
         } finally {
             if (in != null) {
                 try {
