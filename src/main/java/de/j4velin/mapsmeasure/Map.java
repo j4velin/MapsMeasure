@@ -220,7 +220,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     @Override
                     public void run() {
                         try {
-                            altitude = Util.updateElevationView(elevationView, trace, null);
+                            altitude = Util.updateElevationView(elevationView, trace);
                             h.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -621,6 +621,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
@@ -674,7 +675,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         });
 
         if (hasLocationPermission()) {
-            //noinspection MissingPermission
             mMap.setMyLocationEnabled(true);
         }
 
@@ -725,9 +725,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                         @Override
                         public void onConnected(final Bundle bundle) {
-                            //noinspection ResourceType
-                            Location l = LocationServices.FusedLocationApi
-                                    .getLastLocation(mGoogleApiClient);
+                            @SuppressLint("MissingPermission") Location l =
+                                    LocationServices.FusedLocationApi
+                                            .getLastLocation(mGoogleApiClient);
                             mGoogleApiClient.disconnect();
                             callback.gotLocation(l);
                         }
@@ -816,6 +816,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         if (valueTv != null) valueTv.setText(getFormattedString());
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, final String[] permissions,
                                            final int[] grantResults) {
@@ -824,7 +825,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 if (grantResults.length > 0 &&
                         grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
                     getCurrentLocation(lastLocationCallback);
-                    //noinspection ResourceType
                     mMap.setMyLocationEnabled(true);
                 } else {
                     String savedLocation = getSharedPreferences("settings", Context.MODE_PRIVATE)

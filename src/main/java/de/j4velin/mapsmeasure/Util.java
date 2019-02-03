@@ -151,8 +151,7 @@ abstract class Util {
      * @param loc the location
      * @return a pair of 0's
      */
-    private static Pair<Float, Float> getSingleElevation(final LatLng loc, String key) throws
-            IOException {
+    private static Pair<Float, Float> getSingleElevation(final LatLng loc) throws IOException {
         if (BuildConfig.DEBUG) Logger.log("get elevation for " + loc);
         if (CACHE.containsKey(loc)) {
             lastElevation = CACHE.get(loc);
@@ -162,16 +161,13 @@ abstract class Util {
             BufferedReader in = null;
             try {
                 URL url = new URL("https://maps.googleapis.com/maps/api/elevation/xml?locations=" +
-                        loc.latitude + "," + loc.longitude + (key != null ? "&key=" + key : ""));
+                        loc.latitude + "," + loc.longitude + "&key=" + Map.ELEVATION_API_KEY);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
                 String line;
                 int subStringStart = TAG_OPEN.length();
                 while ((line = in.readLine()) != null) {
-                    if (line.contains(STATUS_OVER_LIMIT) && key == null) {
-                        if (BuildConfig.DEBUG) Logger.log("limit reached, try with api key...");
-                        return getSingleElevation(loc, Map.ELEVATION_API_KEY);
-                    } else if (line.trim().startsWith(ERROR_OPEN)) {
+                    if (line.trim().startsWith(ERROR_OPEN)) {
                         String error =
                                 line.substring(ERROR_OPEN.length() + 1, line.indexOf(ERROR_CLOSE));
                         if (BuildConfig.DEBUG) Logger.log("error: " + error);
@@ -207,29 +203,26 @@ abstract class Util {
      * @return the aggregated up and down distances along the trace
      */
     static Pair<Float, Float> updateElevationView(final ElevationView view,
-                                                  final List<LatLng> trace, String key) throws
-            IOException {
+                                                  final List<LatLng> trace) throws IOException {
         if (BuildConfig.DEBUG) Logger.log("get elevation for trace " + trace);
         if (trace.isEmpty()) return new Pair<>(0f, 0f);
-        if (trace.size() == 1) return getSingleElevation(trace.get(0), key);
+        if (trace.size() == 1) return getSingleElevation(trace.get(0));
         String encodedPath = PolyUtil.encode(trace);
         float[] result = new float[ELEVATION_TRACE_SAMPLES];
         HttpURLConnection urlConnection = null;
         BufferedReader in = null;
         try {
             URL url = new URL("https://maps.googleapis.com/maps/api/elevation/xml?path=enc:" +
-                    encodedPath + "&samples=" + ELEVATION_TRACE_SAMPLES +
-                    (key != null ? "&key=" + key : ""));
+                    encodedPath + "&samples=" + ELEVATION_TRACE_SAMPLES + "&key=" +
+                    Map.ELEVATION_API_KEY);
+            if (BuildConfig.DEBUG) Logger.log("url " + url);
             urlConnection = (HttpURLConnection) url.openConnection();
             in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
             String line;
             int pos = 0;
             int subStringStart = TAG_OPEN.length();
             while ((line = in.readLine()) != null) {
-                if (line.contains(STATUS_OVER_LIMIT) && key == null) {
-                    if (BuildConfig.DEBUG) Logger.log("limit reached, try with api key...");
-                    return updateElevationView(view, trace, Map.ELEVATION_API_KEY);
-                } else if (line.trim().startsWith(ERROR_OPEN)) {
+                if (line.trim().startsWith(ERROR_OPEN)) {
                     String error =
                             line.substring(ERROR_OPEN.length() + 1, line.indexOf(ERROR_CLOSE));
                     if (BuildConfig.DEBUG) Logger.log("error: " + error);
