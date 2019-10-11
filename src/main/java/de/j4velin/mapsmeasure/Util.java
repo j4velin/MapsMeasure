@@ -252,7 +252,7 @@ abstract class Util {
             else down += difference;
         }
         lastElevation = result[result.length - 1];
-        return new Pair<>(up, down);
+        return new Pair<>(-1 * up, down);
     }
 
     /**

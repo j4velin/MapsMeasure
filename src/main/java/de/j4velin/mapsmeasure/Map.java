@@ -248,10 +248,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 return "Loading...";
             } else {
                 String re = metric ? formatter_two_dec.format(altitude.first) + " m\u2B06, " +
-                        formatter_two_dec.format(-1 * altitude.second) + " m\u2B07" :
+                        formatter_two_dec.format(altitude.second) + " m\u2B07" :
                         formatter_two_dec.format(altitude.first / 0.3048f) + " ft\u2B06" +
-                                formatter_two_dec.format(-1 * altitude.second / 0.3048f) +
-                                " ft\u2B07";
+                                formatter_two_dec.format(altitude.second / 0.3048f) + " ft\u2B07";
                 if (!trace.isEmpty()) {
                     try {
                         float lastPoint = Util.lastElevation;
@@ -374,7 +373,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     private void init() {
         setContentView(R.layout.activity_map);
 
-        elevationView = (ElevationView) findViewById(R.id.elevationsview);
+        elevationView = findViewById(R.id.elevationsview);
 
         formatter_no_dec.setMaximumFractionDigits(0);
         formatter_two_dec.setMaximumFractionDigits(2);
@@ -388,7 +387,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         metric = prefs.getBoolean("metric", !Locale.getDefault().equals(Locale.US));
 
         final View topCenterOverlay = findViewById(R.id.topCenterOverlay);
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout = findViewById(R.id.drawer_layout);
 
         final View menuButton = findViewById(R.id.menu);
         if (menuButton != null) {
@@ -415,9 +414,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
                 @Override
                 public void onDrawerSlide(final View drawerView, final float slideOffset) {
-                    if (android.os.Build.VERSION.SDK_INT >=
-                            android.os.Build.VERSION_CODES.HONEYCOMB)
-                        topCenterOverlay.setAlpha(1 - slideOffset);
+                    topCenterOverlay.setAlpha(1 - slideOffset);
                     if (menuButtonVisible && menuButton != null && slideOffset > 0) {
                         menuButton.setVisibility(View.INVISIBLE);
                         menuButtonVisible = false;
@@ -426,14 +423,12 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
                 @Override
                 public void onDrawerOpened(final View drawerView) {
-                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
-                        topCenterOverlay.setVisibility(View.INVISIBLE);
+                    topCenterOverlay.setVisibility(View.INVISIBLE);
                 }
 
                 @Override
                 public void onDrawerClosed(final View drawerView) {
-                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
-                        topCenterOverlay.setVisibility(View.VISIBLE);
+                    topCenterOverlay.setVisibility(View.VISIBLE);
                     if (menuButton != null) {
                         menuButton.setVisibility(View.VISIBLE);
                         menuButtonVisible = true;
@@ -445,7 +440,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                 .getMapAsync(this);
 
-        valueTv = (TextView) findViewById(R.id.distance);
+        valueTv = findViewById(R.id.distance);
         updateValueText();
         valueTv.setOnClickListener(new OnClickListener() {
             @Override
@@ -500,7 +495,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
 
         // Drawer stuff
-        ListView drawerList = (ListView) findViewById(R.id.left_drawer);
+        ListView drawerList = findViewById(R.id.left_drawer);
         drawerListAdapert = new DrawerListAdapter(this);
         drawerList.setAdapter(drawerListAdapert);
         drawerList.setDivider(null);
