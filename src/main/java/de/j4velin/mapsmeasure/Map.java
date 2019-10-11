@@ -148,17 +148,27 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             try {
                 Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
                 if (ownedItems.getInt("RESPONSE_CODE") == 0) {
-                    PRO_VERSION =
-                            ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST") != null &&
-                                    ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST")
-                                            .contains(SKU);
-                    getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                            .putBoolean("pro", PRO_VERSION).commit();
+                    if (ownedItems.getInt("RESPONSE_CODE") == 0) {
+                        List<String> items =
+                                ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
+                        for (String item : items) {
+                            try {
+                                final JSONObject jo = new JSONObject(item);
+                                if (jo.getString("productId").equals(SKU)) {
+                                    PRO_VERSION = jo.getInt("purchaseState") == 0;
+                                    getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
+                                            .putBoolean("pro", PRO_VERSION).commit();
+                                }
+                            } catch (Exception e) {
+                                if (BuildConfig.DEBUG) Logger.log(e);
+                            }
+                        }
+                    }
                 }
             } catch (RemoteException e) {
                 Toast.makeText(Map.this, e.getClass().getName() + ": " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
-                e.printStackTrace();
+                if (BuildConfig.DEBUG) Logger.log(e);
             }
         }
     };
