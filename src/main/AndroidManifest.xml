@@ -2,8 +2,8 @@
 <manifest package="de.j4velin.mapsmeasure"
           xmlns:android="http://schemas.android.com/apk/res/android"
           android:installLocation="auto"
-          android:versionCode="143"
-          android:versionName="1.4.3">
+          android:versionCode="144"
+          android:versionName="1.4.4">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -14,7 +14,7 @@
 
     <uses-sdk
         android:minSdkVersion="14"
-        android:targetSdkVersion="27"/>
+        android:targetSdkVersion="29"/>
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -34,6 +34,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="Maps Measure"
         android:largeHeap="true">
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/maps_api_key"/>

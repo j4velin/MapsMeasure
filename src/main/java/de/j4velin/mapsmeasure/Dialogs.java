@@ -405,7 +405,7 @@ abstract class Dialogs {
             public void run() {
                 HttpURLConnection urlConnection = null;
                 try {
-                    URL url = new URL("http://maps.googleapis.com");
+                    URL url = new URL("https://maps.googleapis.com");
                     urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setConnectTimeout(5000);
                     urlConnection.connect();
