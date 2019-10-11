@@ -24,7 +24,7 @@
     <string name="share">Partager</string>
     <string name="file_saved">Fichier enregistré</string>
     <string name="error">Erreur : %s</string>
-    <string name="select_file">Sélection d\un fichier</string>
+    <string name="select_file">Sélection d\'un fichier</string>
     <string name="no_files_found">Aucun fichier trouvé dans %s</string>
     <string name="elevation_error">Une erreur s\'est produite lors de la connexion à l\'API Google Evelation : serveur actuellement indisponible ou limite de demande quotidienne atteinte</string>
     <string name="elevation_error_no_connection">Pas de connexion Internet : l\'application doit interroger l\'API Google Elevation pour obtenir des données d\'altitude et nécessite donc une connexion Internet active pour calculer ces données d\'altitude</string>
