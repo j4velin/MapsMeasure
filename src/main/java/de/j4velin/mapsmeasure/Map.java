@@ -837,7 +837,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     if (savedLocation != null && savedLocation.contains("#")) {
                         String[] data = savedLocation.split("#");
                         try {
-                            if (data.length == 3) {
+                            if (data.length == 3 && mMap != null) {
                                 moveCamera(new LatLng(Double.parseDouble(data[0]),
                                         Double.parseDouble(data[1])), Float.parseFloat(data[2]));
                             }
