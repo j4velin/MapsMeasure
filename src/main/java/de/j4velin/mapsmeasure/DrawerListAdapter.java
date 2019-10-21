@@ -121,11 +121,13 @@ public class DrawerListAdapter extends BaseAdapter {
                                     if (event == null ||
                                             event.getAction() == KeyEvent.ACTION_DOWN) {
                                         new GeocoderTask(map).execute(v.getText().toString());
-                                        InputMethodManager inputManager = (InputMethodManager) map
-                                                .getSystemService(Context.INPUT_METHOD_SERVICE);
-                                        inputManager.hideSoftInputFromWindow(
-                                                map.getCurrentFocus().getWindowToken(),
-                                                InputMethodManager.HIDE_NOT_ALWAYS);
+                                        View view = map.getCurrentFocus();
+                                        if (view != null) {
+                                            InputMethodManager inputManager = (InputMethodManager) map.getSystemService(
+                                                    Context.INPUT_METHOD_SERVICE);
+                                            inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                                                    InputMethodManager.HIDE_NOT_ALWAYS);
+                                        }
                                         map.closeDrawer();
                                     }
                                     return true;
