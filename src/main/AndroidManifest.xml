@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="de.j4velin.mapsmeasure"
-          xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
           android:installLocation="auto"
           android:versionCode="1440"
           android:versionName="1.4.4">
@@ -11,8 +10,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="com.android.vending.BILLING"/>
-
-    <uses-sdk android:targetSdkVersion="29"/>
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -66,7 +63,7 @@
         </activity>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="de.j4velin.mapsmeasure.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">

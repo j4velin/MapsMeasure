@@ -1,17 +1,14 @@
 buildscript {
     repositories {
-        jcenter()
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
+        mavenCentral()
+        google()
     }
     dependencies {
         if (rootProject.ext.has("gradle_classpath")) {
             classpath rootProject.ext.gradle_classpath
         } else {
             logger.warn('classpath not found in rootProject')
-            classpath 'com.android.tools.build:gradle:3.0.1'
+            classpath 'com.android.tools.build:gradle:7.4.1'
         }
     }
 }
@@ -25,13 +22,13 @@ android {
         buildToolsVersion rootProject.ext.buildToolsVersion
     } else {
         logger.warn('compileSdkVersion not found in rootProject')
-        compileSdkVersion 29
-        buildToolsVersion "29.0.2"
+        compileSdkVersion 33
+        buildToolsVersion "33.0.0"
     }
 
     defaultConfig {
         applicationId "de.j4velin.mapsmeasure"
-        minSdkVersion 14
+        minSdkVersion 19
         if (!project.file("key.properties").exists()) {
             resValue "string", "maps_api_key", "0000"
             resValue "string", "elevation_api_key", "0000"
@@ -58,26 +55,18 @@ android {
             debuggable true
         }
     }
-
-    if (System.getenv("TRAVIS")) {
-        lintOptions {
-            ignoreWarnings true
-            abortOnError false
-        }
-    }
+    namespace 'de.j4velin.mapsmeasure'
 }
 
 repositories {
-    jcenter()
-    maven {
-        url "https://maven.google.com"
-    }
+    mavenCentral()
+    google()
 }
 
 dependencies {
-    implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.google.android.gms:play-services-location:15.0.1'
-    implementation 'com.google.android.gms:play-services-maps:15.0.1'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
 }
 
 def props = new Properties()
