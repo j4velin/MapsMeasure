@@ -36,4 +36,6 @@
     <string name="dir_read_error">Error reading directory %s</string>
     <string name="marker_on_current_location">A marker was added on your current location</string>
     <string name="no_google_connection">Can not reach Google server to query for elevation information - please check your internet connection</string>
+    <string name="purchase_error">Purchase not successful, please try again\nErrorcode: %d</string>
+    <string name="purchase_start_error">Can not launch purchase flow, please try again later</string>
 </resources>

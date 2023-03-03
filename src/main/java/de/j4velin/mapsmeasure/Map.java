@@ -20,10 +20,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
@@ -31,8 +29,6 @@ import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.Menu;
@@ -48,7 +44,15 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
-import com.android.vending.billing.IInAppBillingService;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -66,10 +70,9 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.SphericalUtil;
 
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
@@ -77,6 +80,12 @@ import java.util.Stack;
 import de.j4velin.mapsmeasure.wrapper.API17Wrapper;
 
 public class Map extends FragmentActivity implements OnMapReadyCallback {
+
+    private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT =
+            Color.argb(128, 255, 0, 0);
+    private final static float LINE_WIDTH = 5f;
+    private final static int REQUEST_LOCATION_PERMISSION = 0;
+    private final static String SKU = "de.j4velin.mapsmeasure.billing.pro";
 
     enum MeasureType {
         DISTANCE, AREA, ELEVATION
@@ -102,7 +111,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     private static BitmapDescriptor marker;
 
-    private IInAppBillingService mService;
     private static boolean PRO_VERSION = false;
     static String ELEVATION_API_KEY;
 
@@ -116,51 +124,25 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     // store last location callback in case we dont have location permission yet and need to execute it later
     private LocationCallback lastLocationCallback;
 
-    // Constants
-    private final static int COLOR_LINE = Color.argb(128, 0, 0, 0), COLOR_POINT =
-            Color.argb(128, 255, 0, 0);
-    private final static float LINE_WIDTH = 5f;
+    private BillingClient billingClient;
+
+    @SuppressLint("ConstantLocale")
     final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
+
+    @SuppressLint("ConstantLocale")
     private final static NumberFormat formatter_no_dec =
             NumberFormat.getInstance(Locale.getDefault());
-    private final static int REQUEST_LOCATION_PERMISSION = 0;
 
-    final static String SKU = "de.j4velin.mapsmeasure.billing.pro";
-
-    private final ServiceConnection mServiceConn = new ServiceConnection() {
-        @Override
-        public void onServiceDisconnected(final ComponentName name) {
-            mService = null;
-        }
-
-        @Override
-        public void onServiceConnected(final ComponentName name, final IBinder service) {
-            mService = IInAppBillingService.Stub.asInterface(service);
-            try {
-                Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
-                if (ownedItems.getInt("RESPONSE_CODE") == 0) {
-                    if (ownedItems.getInt("RESPONSE_CODE") == 0) {
-                        List<String> items =
-                                ownedItems.getStringArrayList("INAPP_PURCHASE_DATA_LIST");
-                        for (String item : items) {
-                            try {
-                                final JSONObject jo = new JSONObject(item);
-                                if (jo.getString("productId").equals(SKU)) {
-                                    PRO_VERSION = jo.getInt("purchaseState") == 0;
-                                    getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                                            .putBoolean("pro", PRO_VERSION).commit();
-                                }
-                            } catch (Exception e) {
-                                if (BuildConfig.DEBUG) Logger.log(e);
-                            }
-                        }
-                    }
-                }
-            } catch (RemoteException e) {
-                Toast.makeText(Map.this, e.getClass().getName() + ": " + e.getMessage(),
-                        Toast.LENGTH_LONG).show();
-                if (BuildConfig.DEBUG) Logger.log(e);
+    private final PurchasesUpdatedListener purchasesUpdatedListener = (result, purchases) -> {
+        if (result.getResponseCode() == BillingClient.BillingResponseCode.OK
+                && purchases != null) {
+            for (Purchase purchase : purchases) {
+                boolean pro = purchase.getProducts().contains(SKU) && purchase.isAcknowledged();
+                PRO_VERSION = pro;
+                getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("pro", pro).apply();
             }
+        } else if (result.getResponseCode() != BillingClient.BillingResponseCode.USER_CANCELED) {
+            Dialogs.getShowErrorDialog(this, getString(R.string.purchase_error, result.getResponseCode())).show();
         }
     };
 
@@ -273,8 +255,10 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             // "java.lang.ClassCastException: java.util.ArrayList cannot be cast to java.util.Stack"
             // on some devices
             List<LatLng> tmp = (List<LatLng>) savedInstanceState.getSerializable("trace");
-            for (LatLng latLng : tmp) {
-                addPoint(latLng);
+            if (tmp != null) {
+                for (LatLng latLng : tmp) {
+                    addPoint(latLng);
+                }
             }
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                     new LatLng(savedInstanceState.getDouble("position-lat"),
@@ -282,7 +266,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     savedInstanceState.getFloat("position-zoom")));
         } catch (Exception e) {
             if (BuildConfig.DEBUG) Logger.log(e);
-            e.printStackTrace();
         }
     }
 
@@ -345,7 +328,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @SuppressLint("NewApi")
     @Override
     public void onCreate(final Bundle savedInstanceState) {
-        //MapsInitializer.initialize(this, MapsInitializer.Renderer.LATEST));
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= 23 && PermissionChecker
                 .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
                 PermissionChecker.PERMISSION_GRANTED) {
@@ -356,6 +338,10 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         } catch (final BadParcelableException bpe) {
             if (BuildConfig.DEBUG) Logger.log(bpe);
         }
+        billingClient = BillingClient.newBuilder(this)
+                .setListener(purchasesUpdatedListener)
+                .enablePendingPurchases()
+                .build();
         init();
     }
 
@@ -389,13 +375,11 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         if (mDrawerLayout != null) {
             mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 
-            mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
-
+            mDrawerLayout.addDrawerListener(new DrawerLayout.DrawerListener() {
                 private boolean menuButtonVisible = true;
 
                 @Override
                 public void onDrawerStateChanged(int newState) {
-
                 }
 
                 @Override
@@ -487,7 +471,43 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     if (PRO_VERSION) {
                         changeType(MeasureType.ELEVATION);
                     } else {
-                        Dialogs.showElevationAccessDialog(Map.this, mService);
+                        if (billingClient.isReady()) {
+                            Dialogs.showElevationAccessDialog(Map.this, () -> {
+                                QueryProductDetailsParams queryProductDetailsParams =
+                                        QueryProductDetailsParams.newBuilder()
+                                                .setProductList(Collections.singletonList(
+                                                        QueryProductDetailsParams.Product.newBuilder()
+                                                                .setProductId(SKU)
+                                                                .setProductType(BillingClient.ProductType.INAPP)
+                                                                .build())).build();
+
+                                billingClient.queryProductDetailsAsync(queryProductDetailsParams, (result, list) -> {
+                                            for (ProductDetails pd : list) {
+                                                if (pd.getProductId().equals(SKU)) {
+                                                    List<BillingFlowParams.ProductDetailsParams> productDetailsParamsList =
+                                                            Collections.singletonList(
+                                                                    BillingFlowParams.ProductDetailsParams.newBuilder()
+                                                                            .setProductDetails(pd)
+                                                                            .build()
+                                                            );
+
+                                                    BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                                                            .setProductDetailsParamsList(productDetailsParamsList)
+                                                            .build();
+
+                                                    BillingResult launchResult = billingClient.launchBillingFlow(this, billingFlowParams);
+                                                    if (launchResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                                                        Dialogs.getShowErrorDialog(this, getString(R.string.purchase_error, launchResult.getResponseCode())).show();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                );
+
+                            });
+                        } else {
+                            Dialogs.getShowErrorDialog(this, getString(R.string.purchase_start_error)).show();
+                        }
                     }
                     break;
                 case 7: // map
@@ -569,10 +589,25 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         elevationView.setLayoutParams(elevationParams);
 
         PRO_VERSION |= prefs.getBoolean("pro", false);
-        if (!PRO_VERSION) {
-            bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND")
-                    .setPackage("com.android.vending"), mServiceConn, Context.BIND_AUTO_CREATE);
-        }
+
+        billingClient.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+                billingClient.queryPurchasesAsync(
+                        QueryPurchasesParams.newBuilder()
+                                .setProductType(BillingClient.ProductType.INAPP)
+                                .build(),
+                        purchasesUpdatedListener::onPurchasesUpdated
+                );
+            }
+
+            @Override
+            public void onBillingServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+                if (BuildConfig.DEBUG) Logger.log("billing setup failed");
+            }
+        });
     }
 
     @SuppressLint("MissingPermission")
@@ -782,30 +817,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     .putString("lastLocation",
                             lastPosition.target.latitude + "#" + lastPosition.target.longitude +
                                     "#" + lastPosition.zoom).apply();
-        }
-        if (mService != null) {
-            unbindService(mServiceConn);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 42 && resultCode == RESULT_OK) {
-            if (data.getIntExtra("RESPONSE_CODE", 0) == 0) {
-                try {
-                    JSONObject jo = new JSONObject(data.getStringExtra("INAPP_PURCHASE_DATA"));
-                    PRO_VERSION = jo.getString("productId").equals(SKU) &&
-                            jo.getString("developerPayload").equals(getPackageName());
-                    getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                            .putBoolean("pro", PRO_VERSION).apply();
-                    changeType(MeasureType.ELEVATION);
-                } catch (Exception e) {
-                    if (BuildConfig.DEBUG) Logger.log(e);
-                    Toast.makeText(this, e.getClass().getName() + ": " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
