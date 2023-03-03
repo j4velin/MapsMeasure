@@ -40,6 +40,7 @@
         <activity
             android:name="de.j4velin.mapsmeasure.Map"
             android:theme="@style/fullscreen"
+            android:exported="true"
             android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

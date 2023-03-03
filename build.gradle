@@ -29,6 +29,7 @@ android {
     defaultConfig {
         applicationId "de.j4velin.mapsmeasure"
         minSdkVersion 19
+        targetSdkVersion 33
         if (!project.file("key.properties").exists()) {
             resValue "string", "maps_api_key", "0000"
             resValue "string", "elevation_api_key", "0000"

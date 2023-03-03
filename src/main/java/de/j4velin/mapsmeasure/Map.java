@@ -18,17 +18,14 @@ package de.j4velin.mapsmeasure;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.location.Location;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Build;
@@ -36,34 +33,26 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentActivity;
-import androidx.core.content.PermissionChecker;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.PermissionChecker;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentActivity;
+
 import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.OnMapsSdkInitializedCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -81,7 +70,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
@@ -119,7 +107,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     static String ELEVATION_API_KEY;
 
     private DrawerListAdapter drawerListAdapert;
-    private GoogleApiClient mGoogleApiClient;
 
     private ElevationView elevationView;
 
@@ -230,33 +217,24 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         } else if (type == MeasureType.ELEVATION) {
             if (altitude == null) {
                 final Handler h = new Handler();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            altitude = Util.updateElevationView(elevationView, trace);
-                            h.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (isFinishing()) return;
-                                    if (altitude == null) {
-                                        Dialogs.getElevationErrorDialog(Map.this).show();
-                                        changeType(MeasureType.DISTANCE);
-                                    } else {
-                                        updateValueText();
-                                        elevationView.invalidate();
-                                    }
-                                }
-                            });
-                        } catch (IOException e) {
-                            h.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (isFinishing()) return;
-                                    Dialogs.getElevationErrorDialog(Map.this).show();
-                                }
-                            });
-                        }
+                new Thread(() -> {
+                    try {
+                        altitude = Util.updateElevationView(elevationView, trace);
+                        h.post(() -> {
+                            if (isFinishing()) return;
+                            if (altitude == null) {
+                                Dialogs.getElevationErrorDialog(Map.this).show();
+                                changeType(MeasureType.DISTANCE);
+                            } else {
+                                updateValueText();
+                                elevationView.invalidate();
+                            }
+                        });
+                    } catch (IOException e) {
+                        h.post(() -> {
+                            if (isFinishing()) return;
+                            Dialogs.getElevationErrorDialog(Map.this).show();
+                        });
                     }
                 }).start();
                 return "Loading...";
@@ -286,18 +264,17 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     }
 
     @Override
-    protected void onRestoreInstanceState(final Bundle savedInstanceState) {
+    protected void onRestoreInstanceState(@NonNull final Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         try {
             metric = savedInstanceState.getBoolean("metric");
             @SuppressWarnings("unchecked")
             // Casting to Stack<LatLng> apparently results in
-                    // "java.lang.ClassCastException: java.util.ArrayList cannot be cast to java.util.Stack"
-                    // on some devices
-                    List<LatLng> tmp = (List<LatLng>) savedInstanceState.getSerializable("trace");
-            Iterator<LatLng> it = tmp.iterator();
-            while (it.hasNext()) {
-                addPoint(it.next());
+            // "java.lang.ClassCastException: java.util.ArrayList cannot be cast to java.util.Stack"
+            // on some devices
+            List<LatLng> tmp = (List<LatLng>) savedInstanceState.getSerializable("trace");
+            for (LatLng latLng : tmp) {
+                addPoint(latLng);
             }
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                     new LatLng(savedInstanceState.getDouble("position-lat"),
@@ -368,6 +345,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @SuppressLint("NewApi")
     @Override
     public void onCreate(final Bundle savedInstanceState) {
+        //MapsInitializer.initialize(this, MapsInitializer.Renderer.LATEST));
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= 23 && PermissionChecker
                 .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
                 PermissionChecker.PERMISSION_GRANTED) {
@@ -405,12 +383,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
         final View menuButton = findViewById(R.id.menu);
         if (menuButton != null) {
-            menuButton.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(final View v) {
-                    mDrawerLayout.openDrawer(GravityCompat.START);
-                }
-            });
+            menuButton.setOnClickListener(v -> mDrawerLayout.openDrawer(GravityCompat.START));
         }
 
         if (mDrawerLayout != null) {
@@ -425,9 +398,8 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
                 }
 
-                @TargetApi(Build.VERSION_CODES.HONEYCOMB)
                 @Override
-                public void onDrawerSlide(final View drawerView, final float slideOffset) {
+                public void onDrawerSlide(@NonNull final View drawerView, final float slideOffset) {
                     topCenterOverlay.setAlpha(1 - slideOffset);
                     if (menuButtonVisible && menuButton != null && slideOffset > 0) {
                         menuButton.setVisibility(View.INVISIBLE);
@@ -436,12 +408,12 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 }
 
                 @Override
-                public void onDrawerOpened(final View drawerView) {
+                public void onDrawerOpened(@NonNull final View drawerView) {
                     topCenterOverlay.setVisibility(View.INVISIBLE);
                 }
 
                 @Override
-                public void onDrawerClosed(final View drawerView) {
+                public void onDrawerClosed(@NonNull final View drawerView) {
                     topCenterOverlay.setVisibility(View.VISIBLE);
                     if (menuButton != null) {
                         menuButton.setVisibility(View.VISIBLE);
@@ -456,55 +428,36 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
         valueTv = findViewById(R.id.distance);
         updateValueText();
-        valueTv.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                if (type == MeasureType.DISTANCE) {
-                    changeType(MeasureType.AREA);
-                }
-                // only switch to elevation mode is an internet connection is
-                // available and user has access to this feature
-                else if (type == MeasureType.AREA && Util.checkInternetConnection(Map.this) &&
-                        PRO_VERSION) {
-                    changeType(MeasureType.ELEVATION);
-                } else {
-                    if (BuildConfig.DEBUG) Logger.log("internet connection available: " +
-                            Util.checkInternetConnection(Map.this));
-                    changeType(MeasureType.DISTANCE);
-                }
+        valueTv.setOnClickListener(v -> {
+            if (type == MeasureType.DISTANCE) {
+                changeType(MeasureType.AREA);
+            }
+            // only switch to elevation mode is an internet connection is
+            // available and user has access to this feature
+            else if (type == MeasureType.AREA && Util.checkInternetConnection(Map.this) &&
+                    PRO_VERSION) {
+                changeType(MeasureType.ELEVATION);
+            } else {
+                if (BuildConfig.DEBUG) Logger.log("internet connection available: " +
+                        Util.checkInternetConnection(Map.this));
+                changeType(MeasureType.DISTANCE);
             }
         });
 
         View delete = findViewById(R.id.delete);
-        delete.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                removeLast();
-            }
-        });
-        delete.setOnLongClickListener(new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(final View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(Map.this);
-                builder.setMessage(getString(R.string.delete_all, trace.size()));
-                builder.setPositiveButton(android.R.string.yes,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                clear();
-                                dialog.dismiss();
-                            }
-                        });
-                builder.setNegativeButton(android.R.string.no,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                builder.create().show();
-                return true;
-            }
+        delete.setOnClickListener(v -> removeLast());
+        delete.setOnLongClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(Map.this);
+            builder.setMessage(getString(R.string.delete_all, trace.size()));
+            builder.setPositiveButton(android.R.string.yes,
+                    (dialog, which) -> {
+                        clear();
+                        dialog.dismiss();
+                    });
+            builder.setNegativeButton(android.R.string.no,
+                    (dialog, which) -> dialog.dismiss());
+            builder.create().show();
+            return true;
         });
 
 
@@ -513,115 +466,107 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         drawerListAdapert = new DrawerListAdapter(this);
         drawerList.setAdapter(drawerListAdapert);
         drawerList.setDivider(null);
-        drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(final AdapterView<?> parent, final View view, int position,
-                                    long id) {
-                switch (position) {
-                    case 0: // Search before Android 5.0
-                        Dialogs.getSearchDialog(Map.this).show();
-                        closeDrawer();
-                        break;
-                    case 2: // Units
-                        Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace))
-                                .show();
-                        closeDrawer();
-                        break;
-                    case 3: // distance
-                        changeType(MeasureType.DISTANCE);
-                        break;
-                    case 4: // area
-                        changeType(MeasureType.AREA);
-                        break;
-                    case 5: // elevation
-                        if (PRO_VERSION) {
-                            changeType(MeasureType.ELEVATION);
-                        } else {
-                            Dialogs.showElevationAccessDialog(Map.this, mService);
-                        }
-                        break;
-                    case 7: // map
-                        changeView(GoogleMap.MAP_TYPE_NORMAL);
-                        break;
-                    case 8: // satellite
-                        changeView(GoogleMap.MAP_TYPE_HYBRID);
-                        break;
-                    case 9: // terrain
-                        changeView(GoogleMap.MAP_TYPE_TERRAIN);
-                        break;
-                    case 11: // save
-                        Dialogs.getSaveNShare(Map.this, trace).show();
-                        closeDrawer();
-                        break;
-                    case 12: // more apps
-                        try {
-                            startActivity(new Intent(Intent.ACTION_VIEW,
-                                    Uri.parse("market://search?q=pub:j4velin"))
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                        } catch (ActivityNotFoundException anf) {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(
-                                    "https://play.google.com/store/apps/developer?id=j4velin"))
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                        }
-                        break;
-                    case 13: // about
-                        Dialogs.getAbout(Map.this).show();
-                        closeDrawer();
-                        break;
-                    default:
-                        break;
-                }
+        drawerList.setOnItemClickListener((parent, view, position, id) -> {
+            switch (position) {
+                case 0: // Search before Android 5.0
+                    Dialogs.getSearchDialog(Map.this).show();
+                    closeDrawer();
+                    break;
+                case 2: // Units
+                    Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace))
+                            .show();
+                    closeDrawer();
+                    break;
+                case 3: // distance
+                    changeType(MeasureType.DISTANCE);
+                    break;
+                case 4: // area
+                    changeType(MeasureType.AREA);
+                    break;
+                case 5: // elevation
+                    if (PRO_VERSION) {
+                        changeType(MeasureType.ELEVATION);
+                    } else {
+                        Dialogs.showElevationAccessDialog(Map.this, mService);
+                    }
+                    break;
+                case 7: // map
+                    changeView(GoogleMap.MAP_TYPE_NORMAL);
+                    break;
+                case 8: // satellite
+                    changeView(GoogleMap.MAP_TYPE_HYBRID);
+                    break;
+                case 9: // terrain
+                    changeView(GoogleMap.MAP_TYPE_TERRAIN);
+                    break;
+                case 11: // save
+                    Dialogs.getSaveNShare(Map.this, trace).show();
+                    closeDrawer();
+                    break;
+                case 12: // more apps
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("market://search?q=pub:j4velin"))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    } catch (ActivityNotFoundException anf) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(
+                                "https://play.google.com/store/apps/developer?id=j4velin"))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    }
+                    break;
+                case 13: // about
+                    Dialogs.getAbout(Map.this).show();
+                    closeDrawer();
+                    break;
+                default:
+                    break;
             }
         });
 
         changeType(MeasureType.DISTANCE);
 
-        // KitKat translucent decor enabled? -> Add some margin/padding to the
-        // drawer
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+        // KitKat translucent decor enabled? -> Add some margin/padding to the drawer
+        statusbar = Util.getStatusBarHeight(this);
 
-            statusbar = Util.getStatusBarHeight(this);
+        FrameLayout.LayoutParams lp =
+                (FrameLayout.LayoutParams) topCenterOverlay.getLayoutParams();
+        lp.setMargins(0, statusbar + 10, 0, 0);
+        topCenterOverlay.setLayoutParams(lp);
 
-            FrameLayout.LayoutParams lp =
-                    (FrameLayout.LayoutParams) topCenterOverlay.getLayoutParams();
-            lp.setMargins(0, statusbar + 10, 0, 0);
-            topCenterOverlay.setLayoutParams(lp);
+        // on most devices and in most orientations, the navigation bar
+        // should be at the bottom and therefore reduces the available
+        // display height
+        navBarHeight = Util.getNavigationBarHeight(this);
 
-            // on most devices and in most orientations, the navigation bar
-            // should be at the bottom and therefore reduces the available
-            // display height
-            navBarHeight = Util.getNavigationBarHeight(this);
+        DisplayMetrics total, available;
+        total = new DisplayMetrics();
+        available = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(available);
+        API17Wrapper.getRealMetrics(getWindowManager().getDefaultDisplay(), total);
 
-            DisplayMetrics total, available;
-            total = new DisplayMetrics();
-            available = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(available);
-            API17Wrapper.getRealMetrics(getWindowManager().getDefaultDisplay(), total);
+        navBarOnRight = getResources().getConfiguration().orientation ==
+                android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
+                (total.widthPixels - available.widthPixels > 0);
 
-            navBarOnRight = getResources().getConfiguration().orientation ==
-                    android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
-                    (total.widthPixels - available.widthPixels > 0);
+        FrameLayout.LayoutParams elevationParams =
+                (FrameLayout.LayoutParams) elevationView.getLayoutParams();
 
-            FrameLayout.LayoutParams elevationParams =
-                    (FrameLayout.LayoutParams) elevationView.getLayoutParams();
+        drawerSize = mDrawerLayout == null ? Util.dpToPx(this, 200) : 0;
 
-            drawerSize = mDrawerLayout == null ? Util.dpToPx(this, 200) : 0;
-
-            if (navBarOnRight) {
-                // in landscape on phones, the navigation bar might be at the
-                // right side, reducing the available display width
-                drawerList.setPadding(0, statusbar + 10, 0, 0);
-                if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
-                elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
-            } else {
-                drawerList.setPadding(0, statusbar + 10, 0, 0);
-                drawerListAdapert.setMarginBottom(navBarHeight);
-                if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
-                elevationParams.setMargins(Math.max(drawerSize, Util.dpToPx(this, 25)), 0, 0,
-                        navBarHeight);
-            }
-            elevationView.setLayoutParams(elevationParams);
+        if (navBarOnRight) {
+            // in landscape on phones, the navigation bar might be at the
+            // right side, reducing the available display width
+            drawerList.setPadding(0, statusbar + 10, 0, 0);
+            if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
+            elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
+        } else {
+            drawerList.setPadding(0, statusbar + 10, 0, 0);
+            drawerListAdapert.setMarginBottom(navBarHeight);
+            if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
+            elevationParams.setMargins(Math.max(drawerSize, Util.dpToPx(this, 25)), 0, 0,
+                    navBarHeight);
         }
+        elevationView.setLayoutParams(elevationParams);
 
         PRO_VERSION |= prefs.getBoolean("pro", false);
         if (!PRO_VERSION) {
@@ -632,70 +577,55 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     @Override
-    public void onMapReady(final GoogleMap googleMap) {
+    public void onMapReady(@NonNull final GoogleMap googleMap) {
         mMap = googleMap;
         marker = BitmapDescriptorFactory.fromResource(R.drawable.marker);
 
         changeView(getSharedPreferences("settings", Context.MODE_PRIVATE)
                 .getInt("mapView", GoogleMap.MAP_TYPE_NORMAL));
 
-        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(final Marker click) {
-                addPoint(click.getPosition());
-                return true;
-            }
+        mMap.setOnMarkerClickListener(click -> {
+            addPoint(click.getPosition());
+            return true;
         });
 
-        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
-            @Override
-            public boolean onMyLocationButtonClick() {
-                getCurrentLocation(new LocationCallback() {
-                    @Override
-                    public void gotLocation(final Location location) {
-                        if (location != null) {
-                            LatLng myLocation =
-                                    new LatLng(location.getLatitude(), location.getLongitude());
-                            double distance = SphericalUtil.computeDistanceBetween(myLocation,
-                                    mMap.getCameraPosition().target);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
+        mMap.setOnMyLocationButtonClickListener(() -> {
+            getCurrentLocation(location -> {
+                if (location != null) {
+                    LatLng myLocation =
+                            new LatLng(location.getLatitude(), location.getLongitude());
+                    double distance = SphericalUtil.computeDistanceBetween(myLocation,
+                            mMap.getCameraPosition().target);
 
-                            // Only if the distance is less than 50cm we are on our location, add the marker
-                            if (distance < 0.5) {
-                                Toast.makeText(Map.this, R.string.marker_on_current_location,
-                                        Toast.LENGTH_SHORT).show();
-                                addPoint(myLocation);
-                            } else {
-                                if (BuildConfig.DEBUG)
-                                    Logger.log("location accuracy too bad to add point");
-                                moveCamera(myLocation);
-                            }
-                        }
+                    // Only if the distance is less than 50cm we are on our location, add the marker
+                    if (distance < 0.5) {
+                        Toast.makeText(Map.this, R.string.marker_on_current_location,
+                                Toast.LENGTH_SHORT).show();
+                        addPoint(myLocation);
+                    } else {
+                        if (BuildConfig.DEBUG)
+                            Logger.log("location accuracy too bad to add point");
+                        moveCamera(myLocation);
                     }
-                });
-                return true;
-            }
+                }
+            });
+            return true;
         });
 
-        mMap.setOnMapClickListener(new OnMapClickListener() {
-            @Override
-            public void onMapClick(final LatLng center) {
-                addPoint(center);
-            }
-        });
+        mMap.setOnMapClickListener(this::addPoint);
 
         if (hasLocationPermission()) {
             mMap.setMyLocationEnabled(true);
         }
 
         // KitKat translucent decor enabled? -> Add some margin/padding to the map
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-            if (navBarOnRight) {
-                // in landscape on phones, the navigation bar might be at the
-                // right side, reducing the available display width
-                mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
-            } else {
-                mMap.setPadding(0, statusbar, 0, navBarHeight);
-            }
+        if (navBarOnRight) {
+            // in landscape on phones, the navigation bar might be at the
+            // right side, reducing the available display width
+            mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
+        } else {
+            mMap.setPadding(0, statusbar, 0, navBarHeight);
         }
 
         // check if open with csv file
@@ -705,18 +635,15 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             } catch (IOException e) {
                 if (BuildConfig.DEBUG) Logger.log(e);
                 Toast.makeText(this, getString(R.string.error,
-                        e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
+                                e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
                         .show();
                 e.printStackTrace();
             }
         } else {
             // dont move to current position if started with a csv file
-            getCurrentLocation(new LocationCallback() {
-                @Override
-                public void gotLocation(final Location location) {
-                    if (location != null && mMap.getCameraPosition().zoom <= 2) {
-                        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()));
-                    }
+            getCurrentLocation(location -> {
+                if (location != null && mMap.getCameraPosition().zoom <= 5) {
+                    moveCamera(new LatLng(location.getLatitude(), location.getLongitude()));
                 }
             });
         }
@@ -727,26 +654,10 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
      *
      * @param callback the callback which should be called when we got a location
      */
+    @SuppressLint("MissingPermission")
     private void getCurrentLocation(final LocationCallback callback) {
         if (hasLocationPermission()) {
-            if (callback == null) return;
-            mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
-                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                        @Override
-                        public void onConnected(final Bundle bundle) {
-                            @SuppressLint("MissingPermission") Location l =
-                                    LocationServices.FusedLocationApi
-                                            .getLastLocation(mGoogleApiClient);
-                            mGoogleApiClient.disconnect();
-                            callback.gotLocation(l);
-                        }
-
-                        @Override
-                        public void onConnectionSuspended(int cause) {
-                            if (BuildConfig.DEBUG) Logger.log("connection suspended: " + cause);
-                        }
-                    }).build();
-            mGoogleApiClient.connect();
+            LocationServices.getFusedLocationProviderClient(this).getLastLocation().addOnSuccessListener(callback::gotLocation);
         } else { // no permission
             if (Build.VERSION.SDK_INT >= 23) {
                 lastLocationCallback = callback;
@@ -801,7 +712,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         drawerListAdapert.changeView(newView);
         if (mDrawerLayout != null) mDrawerLayout.closeDrawers();
         getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putInt("mapView", newView)
-                .commit();
+                .apply();
     }
 
     /**
@@ -827,32 +738,30 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     @Override
-    public void onRequestPermissionsResult(int requestCode, final String[] permissions,
-                                           final int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_LOCATION_PERMISSION:
-                if (grantResults.length > 0 &&
-                        grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
-                    getCurrentLocation(lastLocationCallback);
-                    mMap.setMyLocationEnabled(true);
-                } else {
-                    String savedLocation = getSharedPreferences("settings", Context.MODE_PRIVATE)
-                            .getString("lastLocation", null);
-                    if (savedLocation != null && savedLocation.contains("#")) {
-                        String[] data = savedLocation.split("#");
-                        try {
-                            if (data.length == 3 && mMap != null) {
-                                moveCamera(new LatLng(Double.parseDouble(data[0]),
-                                        Double.parseDouble(data[1])), Float.parseFloat(data[2]));
-                            }
-                        } catch (NumberFormatException nfe) {
-                            nfe.printStackTrace();
+    public void onRequestPermissionsResult(int requestCode, @NonNull final String[] permissions,
+                                           @NonNull final int[] grantResults) {
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 &&
+                    grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
+                getCurrentLocation(lastLocationCallback);
+                mMap.setMyLocationEnabled(true);
+            } else {
+                String savedLocation = getSharedPreferences("settings", Context.MODE_PRIVATE)
+                        .getString("lastLocation", null);
+                if (savedLocation != null && savedLocation.contains("#")) {
+                    String[] data = savedLocation.split("#");
+                    try {
+                        if (data.length == 3 && mMap != null) {
+                            moveCamera(new LatLng(Double.parseDouble(data[0]),
+                                    Double.parseDouble(data[1])), Float.parseFloat(data[2]));
                         }
+                    } catch (NumberFormatException nfe) {
+                        nfe.printStackTrace();
                     }
                 }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
@@ -869,12 +778,10 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         super.onDestroy();
         if (mMap != null) {
             CameraPosition lastPosition = mMap.getCameraPosition();
-            if (lastPosition != null) {
-                getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                        .putString("lastLocation",
-                                lastPosition.target.latitude + "#" + lastPosition.target.longitude +
-                                        "#" + lastPosition.zoom).commit();
-            }
+            getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
+                    .putString("lastLocation",
+                            lastPosition.target.latitude + "#" + lastPosition.target.longitude +
+                                    "#" + lastPosition.zoom).apply();
         }
         if (mService != null) {
             unbindService(mServiceConn);
@@ -890,7 +797,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     PRO_VERSION = jo.getString("productId").equals(SKU) &&
                             jo.getString("developerPayload").equals(getPackageName());
                     getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                            .putBoolean("pro", PRO_VERSION).commit();
+                            .putBoolean("pro", PRO_VERSION).apply();
                     changeType(MeasureType.ELEVATION);
                 } catch (Exception e) {
                     if (BuildConfig.DEBUG) Logger.log(e);
