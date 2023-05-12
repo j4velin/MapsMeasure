@@ -44,6 +44,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
+import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
@@ -137,9 +138,20 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         if (result.getResponseCode() == BillingClient.BillingResponseCode.OK
                 && purchases != null) {
             for (Purchase purchase : purchases) {
-                boolean pro = purchase.getProducts().contains(SKU) && purchase.isAcknowledged();
+                boolean pro = purchase.getProducts().contains(SKU);
                 PRO_VERSION = pro;
                 getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("pro", pro).apply();
+                if (!purchase.isAcknowledged()) {
+                    AcknowledgePurchaseParams acknowledgePurchaseParams =
+                            AcknowledgePurchaseParams.newBuilder()
+                                    .setPurchaseToken(purchase.getPurchaseToken())
+                                    .build();
+                    billingClient.acknowledgePurchase(acknowledgePurchaseParams, billingResult -> {
+                        if (BuildConfig.DEBUG) {
+                            Logger.log("acknowledgePurchaseResponse: " + billingResult);
+                        }
+                    });
+                }
             }
         } else if (result.getResponseCode() != BillingClient.BillingResponseCode.USER_CANCELED) {
             Dialogs.getShowErrorDialog(this, getString(R.string.purchase_error, result.getResponseCode())).show();
