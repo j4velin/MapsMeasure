@@ -8,7 +8,7 @@ buildscript {
             classpath rootProject.ext.gradle_classpath
         } else {
             logger.warn('classpath not found in rootProject')
-            classpath 'com.android.tools.build:gradle:7.4.1'
+            classpath 'com.android.tools.build:gradle:8.5.0'
         }
     }
 }
@@ -18,18 +18,18 @@ apply plugin: 'com.android.application'
 android {
 
     if (rootProject.ext.has("compileSdkVersion")) {
-        compileSdkVersion rootProject.ext.compileSdkVersion
-        buildToolsVersion rootProject.ext.buildToolsVersion
+        compileSdkVersion = rootProject.ext.compileSdkVersion
+        buildToolsVersion = rootProject.ext.buildToolsVersion
     } else {
         logger.warn('compileSdkVersion not found in rootProject')
-        compileSdkVersion 33
-        buildToolsVersion "33.0.0"
+        compileSdkVersion = 34
+        buildToolsVersion = "34.0.0"
     }
 
     defaultConfig {
         applicationId "de.j4velin.mapsmeasure"
-        minSdkVersion 19
-        targetSdkVersion 33
+        minSdkVersion 21
+        targetSdkVersion 34
         if (!project.file("key.properties").exists()) {
             resValue "string", "maps_api_key", "0000"
             resValue "string", "elevation_api_key", "0000"
@@ -66,9 +66,9 @@ repositories {
 
 dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.gms:play-services-location:21.0.1'
-    implementation 'com.google.android.gms:play-services-maps:18.1.0'
-    implementation "com.android.billingclient:billing:5.1.0"
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'com.google.android.gms:play-services-maps:19.0.0'
+    implementation 'com.android.billingclient:billing:7.0.0'
 }
 
 def props = new Properties()
