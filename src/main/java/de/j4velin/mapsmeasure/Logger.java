@@ -42,6 +42,7 @@ public abstract class Logger {
     public static void log(final String msg) {
         if (!BuildConfig.DEBUG) return;
         if (msg != null) android.util.Log.d(APP, msg);
+        /*
         try {
             if (fw == null) {
                 fw = new FileWriter(new File(
@@ -54,6 +55,7 @@ public abstract class Logger {
         } catch (IOException e) {
             e.printStackTrace();
         }
+         */
     }
 
     protected void finalize() throws Throwable {

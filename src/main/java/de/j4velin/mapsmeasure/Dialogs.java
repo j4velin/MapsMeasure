@@ -67,7 +67,6 @@ abstract class Dialogs {
         } catch (NameNotFoundException e1) {
             // should not happen as the app is definitely installed when
             // seeing the dialog
-            e1.printStackTrace();
         }
         builder.setView(tv);
         builder.setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss());
@@ -160,7 +159,6 @@ abstract class Dialogs {
                     d.dismiss();
                 } catch (IOException e) {
                     if (BuildConfig.DEBUG) Logger.log(e);
-                    e.printStackTrace();
                     Toast.makeText(c, c.getString(R.string.error,
                                     e.getClass().getSimpleName() + "\n" + e.getMessage()),
                             Toast.LENGTH_LONG).show();
@@ -176,7 +174,6 @@ abstract class Dialogs {
                         dialog.dismiss();
                     } catch (IOException e) {
                         if (BuildConfig.DEBUG) Logger.log(e);
-                        e.printStackTrace();
                         Toast.makeText(c, c.getString(R.string.error,
                                         e.getClass().getSimpleName() + "\n" + e.getMessage()),
                                 Toast.LENGTH_LONG).show();
@@ -199,7 +196,6 @@ abstract class Dialogs {
                 c.startActivity(Intent.createChooser(shareIntent, null));
             } catch (IOException e) {
                 if (BuildConfig.DEBUG) Logger.log(e);
-                e.printStackTrace();
                 Toast.makeText(c, c.getString(R.string.error,
                                 e.getClass().getSimpleName() + "\n" + e.getMessage()),
                         Toast.LENGTH_LONG).show();
@@ -346,7 +342,6 @@ abstract class Dialogs {
                 urlConnection.connect();
                 callback.result(true);
             } catch (IOException e) {
-                e.printStackTrace();
                 if (BuildConfig.DEBUG) Logger.log(e);
                 callback.result(false);
             } finally {

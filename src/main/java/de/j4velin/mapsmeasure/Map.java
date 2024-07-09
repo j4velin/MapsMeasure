@@ -245,7 +245,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                                     formatter_two_dec.format(lastPoint / 0.3048f) + " ft");
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        if (BuildConfig.DEBUG) Logger.log(e);
                     }
                 }
                 elevationView.setVisibility(trace.size() > 1 ? View.VISIBLE : View.GONE);
@@ -684,7 +684,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 Toast.makeText(this, getString(R.string.error,
                                 e.getClass().getSimpleName() + "\n" + e.getMessage()), Toast.LENGTH_LONG)
                         .show();
-                e.printStackTrace();
             }
         } else {
             // dont move to current position if started with a csv file
@@ -803,7 +802,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                                     Double.parseDouble(data[1])), Float.parseFloat(data[2]));
                         }
                     } catch (NumberFormatException nfe) {
-                        nfe.printStackTrace();
+                        if (BuildConfig.DEBUG) Logger.log(nfe);
                     }
                 }
             }
