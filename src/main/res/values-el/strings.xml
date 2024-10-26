@@ -36,4 +36,6 @@
     <string name="dir_read_error">Σφάλμα ανάγνωσης φακέλου %s</string>
     <string name="marker_on_current_location">Ένας δείκτης προστέθηκε στην τρέχουσα τοποθεσία σας</string>
     <string name="no_google_connection">Αδυναμία πρόσβασης στο διακομιστή της Google για ανάκτηση υψομετρικών δεδομένων - παρακαλώ ελέγξτε τη σύνδεση σας</string>
+    <string name="purchase_error">Η αγορά δεν ήταν επιτυχής, δοκιμάστε ξανά\nΚωδικός σφάλματος: %d</string>
+    <string name="purchase_start_error">Δεν είναι δυνατή η εκκίνηση της ροής αγορών, δοκιμάστε ξανά αργότερα</string>
 </resources>
