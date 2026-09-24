@@ -18,6 +18,7 @@ package de.j4velin.mapsmeasure;
 
 import android.content.Context;
 import android.location.Geocoder;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -106,7 +107,7 @@ public class DrawerListAdapter extends BaseAdapter {
                                 public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
                                     if (event == null ||
                                             event.getAction() == KeyEvent.ACTION_DOWN) {
-                                        new GeocoderTask(map).execute(v.getText().toString());
+                                        map.searchLocation(v.getText().toString());
                                         View view = map.getCurrentFocus();
                                         if (view != null) {
                                             InputMethodManager inputManager = (InputMethodManager) map.getSystemService(
@@ -121,7 +122,7 @@ public class DrawerListAdapter extends BaseAdapter {
                             });
                 }
             } else {
-                if (BuildConfig.DEBUG) Logger.log("Geocoder not present");
+                if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "Geocoder not present");
                 if (convertView == null) {
                     convertView = mInflater.inflate(R.layout.listitem_empty, parent, false);
                 }

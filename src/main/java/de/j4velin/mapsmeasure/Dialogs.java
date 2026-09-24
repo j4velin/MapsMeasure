@@ -25,6 +25,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Environment;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.Window;
 import android.widget.CheckBox;
@@ -38,7 +40,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Stack;
+import java.util.List;
 
 abstract class Dialogs {
 
@@ -51,7 +53,8 @@ abstract class Dialogs {
         builder.setTitle(R.string.about);
 
         TextView tv = new TextView(c);
-        int pad = (Util.dpToPx(c, 10));
+        int pad = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10,
+                c.getResources().getDisplayMetrics());
         tv.setPadding(pad, pad, pad, pad);
 
         try {
@@ -73,7 +76,7 @@ abstract class Dialogs {
      * @param trace the current trace of points
      * @return the "save & share" dialog
      */
-    public static Dialog getSaveNShare(final Activity c, final Stack<LatLng> trace) {
+    public static Dialog getSaveNShare(final Activity c, final List<LatLng> trace) {
         final Dialog d = new Dialog(c);
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         d.setContentView(R.layout.dialog_save);
@@ -108,11 +111,11 @@ abstract class Dialogs {
                         fname = "MapsMeasure_" + System.currentTimeMillis();
                     }
                     final File f = new File(destination, fname + ".csv");
-                    Util.saveToFile(f, trace);
+                    TraceFile.save(f, trace);
                     d.dismiss();
                     Toast.makeText(c, R.string.file_saved, Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
-                    if (BuildConfig.DEBUG) Logger.log(e);
+                    if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "save & share failed", e);
                     Toast.makeText(c, c.getString(R.string.error,
                                     e.getClass().getSimpleName() + "\n" + e.getMessage()),
                             Toast.LENGTH_LONG).show();
@@ -150,10 +153,10 @@ abstract class Dialogs {
                         Toast.LENGTH_SHORT).show();
             } else if (files.length == 1) {
                 try {
-                    Util.loadFromFile(Uri.fromFile(files[0]), (Map) c);
+                    ((Map) c).loadTrace(Uri.fromFile(files[0]));
                     d.dismiss();
                 } catch (IOException e) {
-                    if (BuildConfig.DEBUG) Logger.log(e);
+                    if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "save & share failed", e);
                     Toast.makeText(c, c.getString(R.string.error,
                                     e.getClass().getSimpleName() + "\n" + e.getMessage()),
                             Toast.LENGTH_LONG).show();
@@ -165,10 +168,10 @@ abstract class Dialogs {
                 final DeleteAdapter da = new DeleteAdapter(files, (Map) c);
                 b.setAdapter(da, (dialog, which) -> {
                     try {
-                        Util.loadFromFile(Uri.fromFile(da.getFile(which)), (Map) c);
+                        ((Map) c).loadTrace(Uri.fromFile(da.getFile(which)));
                         dialog.dismiss();
                     } catch (IOException e) {
-                        if (BuildConfig.DEBUG) Logger.log(e);
+                        if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "save & share failed", e);
                         Toast.makeText(c, c.getString(R.string.error,
                                         e.getClass().getSimpleName() + "\n" + e.getMessage()),
                                 Toast.LENGTH_LONG).show();
@@ -180,7 +183,7 @@ abstract class Dialogs {
         d.findViewById(R.id.share).setOnClickListener(v -> {
             try {
                 final File f = new File(c.getCacheDir(), "MapsMeasure.csv");
-                Util.saveToFile(f, trace);
+                TraceFile.save(f, trace);
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.putExtra(Intent.EXTRA_STREAM, FileProvider
@@ -190,7 +193,7 @@ abstract class Dialogs {
                 d.dismiss();
                 c.startActivity(Intent.createChooser(shareIntent, null));
             } catch (IOException e) {
-                if (BuildConfig.DEBUG) Logger.log(e);
+                if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "save & share failed", e);
                 Toast.makeText(c, c.getString(R.string.error,
                                 e.getClass().getSimpleName() + "\n" + e.getMessage()),
                         Toast.LENGTH_LONG).show();
