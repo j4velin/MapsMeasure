@@ -1,0 +1,32 @@
+[versions]
+agp = "9.4.1"
+# must match the Kotlin version AGP bundles for its built-in Kotlin support
+kotlin = "2.2.10"
+# 8.4 and later are built with Kotlin 2.4, which Kotlin 2.2 cannot read
+mapsCompose = "8.3.1"
+# the BOM maps-compose 8.3.1 is built against
+composeBom = "2026.03.00"
+coreKtx = "1.19.1"
+coroutines = "1.10.2"
+drawerlayout = "1.2.0"
+fragment = "1.9.1"
+junit = "4.13.2"
+lifecycle = "2.9.4"
+playServicesLocation = "21.4.0"
+playServicesMaps = "20.0.0"
+
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
+androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+junit = { module = "junit:junit", version.ref = "junit" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
+play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
