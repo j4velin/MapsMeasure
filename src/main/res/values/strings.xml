@@ -7,7 +7,6 @@
     <string name="section_mapview">Map view</string>
     <string name="measure_distance">Distance</string>
     <string name="measure_area">Area</string>
-    <string name="measure_elevation">Elevation</string>
     <string name="mapview_map">Map</string>
     <string name="mapview_satellite">Satellite</string>
     <string name="mapview_terrain">Terrain</string>
@@ -34,14 +33,8 @@
     <string name="error">Error: %s</string>
     <string name="select_file">Select file</string>
     <string name="no_files_found">No files found in %s</string>
-    <string name="elevation_error">There was an error connecting to the Google Evelation API: Server currently not available or daily request limit reached</string>
-    <string name="elevation_error_no_connection">No internet connection: The app needs to query the Google Evelation API to get altitude data and therefore requires an active internet connection to calculate evelation data</string>
-    <string name="buy_pro">This feature is currently not available in the free version of the app. Do you want to upgrade to the pro version now?</string>
     <string name="file_name">File name (optional)</string>
     <string name="file_path">File will be saved here: %s</string>
     <string name="dir_read_error">Error reading directory %s</string>
     <string name="marker_on_current_location">A marker was added on your current location</string>
-    <string name="no_google_connection">Can not reach Google server to query for elevation information - please check your internet connection</string>
-    <string name="purchase_error">Purchase not successful, please try again\nErrorcode: %d</string>
-    <string name="purchase_start_error">Can not launch purchase flow, please try again later</string>
 </resources>

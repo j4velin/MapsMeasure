@@ -7,7 +7,6 @@
     <string name="section_mapview">Μορφή χάρτη</string>
     <string name="measure_distance">Απόσταση</string>
     <string name="measure_area">Έκταση</string>
-    <string name="measure_elevation">Υψόμετρο</string>
     <string name="mapview_map">Χάρτης</string>
     <string name="mapview_satellite">Δορυφόρος</string>
     <string name="mapview_terrain">Έδαφος</string>
@@ -33,14 +32,8 @@
     <string name="error">Σφάλμα: %s</string>
     <string name="select_file">Επιλέξτε αρχείο</string>
     <string name="no_files_found">Δε βρέθηκαν αρχεία στο %s</string>
-    <string name="elevation_error">Σφάλμα κατά τη σύνδεση στο Google Evelation API: ο διακομιστής δεν είναι διαθέσιμος ή καλύφθηκε το ημερήσιο όριο αιτήσεων</string>
-    <string name="elevation_error_no_connection">Δεν υπάρχει σύνδεση στο διαδίκτυο: η εφαρμογή χρειάζεται διαδικτυακή πρόσβαση στο Google Evelation API για να λάβει υψομετρικά δεδομένα</string>
-    <string name="buy_pro">Αυτό το χαρακτηριστικό δεν είναι διαθέσιμο στη δωρεάν έκδοση. Θέλετε να αναβαθμίσετε στην έκδοση Pro;</string>
     <string name="file_name">Όνομα αρχείου (προαιρετικό)</string>
     <string name="file_path">Το αρχείο θα αποθηκευτεί εδώ: %s</string>
     <string name="dir_read_error">Σφάλμα ανάγνωσης φακέλου %s</string>
     <string name="marker_on_current_location">Ένας δείκτης προστέθηκε στην τρέχουσα τοποθεσία σας</string>
-    <string name="no_google_connection">Αδυναμία πρόσβασης στο διακομιστή της Google για ανάκτηση υψομετρικών δεδομένων - παρακαλώ ελέγξτε τη σύνδεση σας</string>
-    <string name="purchase_error">Η αγορά δεν ήταν επιτυχής, δοκιμάστε ξανά\nΚωδικός σφάλματος: %d</string>
-    <string name="purchase_start_error">Δεν είναι δυνατή η εκκίνηση της ροής αγορών, δοκιμάστε ξανά αργότερα</string>
 </resources>

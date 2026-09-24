@@ -38,19 +38,18 @@ public class DrawerListAdapter extends BaseAdapter {
     private final static int ID_EMPTY = 4;
 
     private final static int[] TYPE_AT_POSITION =
-            {ID_EDITTEXT, ID_DIVIDER, ID_ITEM, ID_ITEM, ID_ITEM, ID_ITEM, ID_DIVIDER, ID_ITEM,
-                    ID_ITEM, ID_ITEM, ID_DIVIDER, ID_SMALL_ITEM, ID_SMALL_ITEM, ID_SMALL_ITEM,
-                    ID_EMPTY};
+            {ID_EDITTEXT, ID_DIVIDER, ID_ITEM, ID_ITEM, ID_ITEM, ID_DIVIDER, ID_ITEM, ID_ITEM,
+                    ID_ITEM, ID_DIVIDER, ID_SMALL_ITEM, ID_SMALL_ITEM, ID_SMALL_ITEM, ID_EMPTY};
 
     private final static int[] STRING_AT_POSITION =
             {0, R.string.section_measure, R.string.units, R.string.measure_distance,
-                    R.string.measure_area, R.string.measure_elevation, R.string.section_mapview,
+                    R.string.measure_area, R.string.section_mapview,
                     R.string.mapview_map, R.string.mapview_satellite, R.string.mapview_terrain,
                     R.string.about, R.string.savenshare, R.string.moreapps, R.string.about, 0};
 
     private final static int[] ICON_AT_POSITION =
             {0, 0, R.drawable.ic_metric, R.drawable.ic_distance, R.drawable.ic_area,
-                    R.drawable.ic_elevation, 0, R.drawable.ic_mapview_map,
+                    0, R.drawable.ic_mapview_map,
                     R.drawable.ic_mapview_satellite, R.drawable.ic_mapview_terrain, 0,
                     R.drawable.ic_action_save, R.drawable.ic_store, R.drawable.ic_about, 0};
 
@@ -68,8 +67,9 @@ public class DrawerListAdapter extends BaseAdapter {
     }
 
     public void setMarginBottom(int margin) {
+        if (margin == marginBottom) return;
         marginBottom = margin;
-        notifyDataSetInvalidated();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -98,29 +98,33 @@ public class DrawerListAdapter extends BaseAdapter {
         int type = getItemViewType(position);
         if (type == ID_EDITTEXT) {
             if (Geocoder.isPresent()) {
-                convertView = mInflater.inflate(R.layout.listitem_edittext, parent, false);
-                ((EditText) convertView.findViewById(R.id.search))
-                        .setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                            @Override
-                            public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
-                                if (event == null ||
-                                        event.getAction() == KeyEvent.ACTION_DOWN) {
-                                    new GeocoderTask(map).execute(v.getText().toString());
-                                    View view = map.getCurrentFocus();
-                                    if (view != null) {
-                                        InputMethodManager inputManager = (InputMethodManager) map.getSystemService(
-                                                Context.INPUT_METHOD_SERVICE);
-                                        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
-                                                InputMethodManager.HIDE_NOT_ALWAYS);
+                if (convertView == null) {
+                    convertView = mInflater.inflate(R.layout.listitem_edittext, parent, false);
+                    ((EditText) convertView.findViewById(R.id.search))
+                            .setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                                @Override
+                                public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
+                                    if (event == null ||
+                                            event.getAction() == KeyEvent.ACTION_DOWN) {
+                                        new GeocoderTask(map).execute(v.getText().toString());
+                                        View view = map.getCurrentFocus();
+                                        if (view != null) {
+                                            InputMethodManager inputManager = (InputMethodManager) map.getSystemService(
+                                                    Context.INPUT_METHOD_SERVICE);
+                                            inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                                                    InputMethodManager.HIDE_NOT_ALWAYS);
+                                        }
+                                        map.closeDrawer();
                                     }
-                                    map.closeDrawer();
+                                    return true;
                                 }
-                                return true;
-                            }
-                        });
+                            });
+                }
             } else {
                 if (BuildConfig.DEBUG) Logger.log("Geocoder not present");
-                convertView = mInflater.inflate(R.layout.listitem_empty, parent, false);
+                if (convertView == null) {
+                    convertView = mInflater.inflate(R.layout.listitem_empty, parent, false);
+                }
             }
         } else if (type == ID_EMPTY) {
             ViewHolder holder;
@@ -189,25 +193,22 @@ public class DrawerListAdapter extends BaseAdapter {
             case AREA:
                 selected_type = 4;
                 break;
-            case ELEVATION:
-                selected_type = 5;
-                break;
         }
-        notifyDataSetInvalidated();
+        notifyDataSetChanged();
     }
 
     public void changeView(final int newView) {
         switch (newView) {
             case GoogleMap.MAP_TYPE_NORMAL:
-                selected_view = 7;
+                selected_view = 6;
                 break;
             case GoogleMap.MAP_TYPE_HYBRID:
-                selected_view = 8;
+                selected_view = 7;
                 break;
             case GoogleMap.MAP_TYPE_TERRAIN:
-                selected_view = 9;
+                selected_view = 8;
                 break;
         }
-        notifyDataSetInvalidated();
+        notifyDataSetChanged();
     }
 }

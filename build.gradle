@@ -17,7 +17,6 @@ android {
         targetSdk = 37
         if (!project.file("key.properties").exists()) {
             resValue "string", "maps_api_key", "0000"
-            resValue "string", "elevation_api_key", "0000"
         }
     }
 
@@ -47,10 +46,10 @@ android {
 
 dependencies {
     implementation 'androidx.core:core:1.19.1'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
+    implementation 'androidx.fragment:fragment:1.9.1'
     implementation 'com.google.android.gms:play-services-location:21.4.0'
     implementation 'com.google.android.gms:play-services-maps:20.0.0'
-    implementation 'com.android.billingclient:billing:9.1.0'
 }
 
 def props = new Properties()

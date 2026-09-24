@@ -27,8 +27,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.BadParcelableException;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -45,17 +43,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
-import com.android.billingclient.api.AcknowledgePurchaseParams;
-import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.BillingClientStateListener;
-import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.BillingResult;
-import com.android.billingclient.api.PendingPurchasesParams;
-import com.android.billingclient.api.ProductDetails;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.QueryProductDetailsParams;
-import com.android.billingclient.api.QueryPurchasesParams;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -75,7 +62,7 @@ import com.google.maps.android.SphericalUtil;
 
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
@@ -86,10 +73,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             Color.argb(128, 255, 0, 0);
     private final static float LINE_WIDTH = 5f;
     private final static int REQUEST_LOCATION_PERMISSION = 0;
-    private final static String SKU = "de.j4velin.mapsmeasure.billing.pro";
 
     enum MeasureType {
-        DISTANCE, AREA, ELEVATION
+        DISTANCE, AREA
     }
 
     // the map to draw to
@@ -103,7 +89,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     private Polygon areaOverlay;
 
-    private Pair<Float, Float> altitude;
     private float distance; // in meters
     private MeasureType type; // the currently selected measure type
     private TextView valueTv; // the view displaying the distance/area & unit
@@ -112,20 +97,19 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
     private static BitmapDescriptor marker;
 
-    private static boolean PRO_VERSION = false;
-    static String ELEVATION_API_KEY;
 
     private DrawerListAdapter drawerListAdapert;
-
-    private ElevationView elevationView;
 
     private boolean navBarOnRight;
     private int drawerSize, statusbar, navBarHeight;
 
+    // state from before the activity got recreated, applied once the map is ready
+    private boolean stateRestored;
+    private List<LatLng> restoredTrace;
+    private CameraPosition restoredCamera;
+
     // store last location callback in case we dont have location permission yet and need to execute it later
     private LocationCallback lastLocationCallback;
-
-    private BillingClient billingClient;
 
     @SuppressLint("ConstantLocale")
     final static NumberFormat formatter_two_dec = NumberFormat.getInstance(Locale.getDefault());
@@ -133,30 +117,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     @SuppressLint("ConstantLocale")
     private final static NumberFormat formatter_no_dec =
             NumberFormat.getInstance(Locale.getDefault());
-
-    private final PurchasesUpdatedListener purchasesUpdatedListener = (result, purchases) -> {
-        if (result.getResponseCode() == BillingClient.BillingResponseCode.OK
-                && purchases != null) {
-            for (Purchase purchase : purchases) {
-                boolean pro = purchase.getProducts().contains(SKU);
-                PRO_VERSION = pro;
-                getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("pro", pro).apply();
-                if (!purchase.isAcknowledged()) {
-                    AcknowledgePurchaseParams acknowledgePurchaseParams =
-                            AcknowledgePurchaseParams.newBuilder()
-                                    .setPurchaseToken(purchase.getPurchaseToken())
-                                    .build();
-                    billingClient.acknowledgePurchase(acknowledgePurchaseParams, billingResult -> {
-                        if (BuildConfig.DEBUG) {
-                            Logger.log("acknowledgePurchaseResponse: " + billingResult);
-                        }
-                    });
-                }
-            }
-        } else if (result.getResponseCode() != BillingClient.BillingResponseCode.USER_CANCELED) {
-            Dialogs.getShowErrorDialog(this, getString(R.string.purchase_error, result.getResponseCode())).show();
-        }
-    };
 
     public GoogleMap getMap() {
         return mMap;
@@ -177,7 +137,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
      */
     private String getFormattedString() {
         if (type == MeasureType.DISTANCE) {
-            elevationView.setVisibility(View.GONE);
             if (metric) {
                 if (distance > 1000) return formatter_two_dec.format(distance / 1000) + " km";
                 else return formatter_two_dec.format(Math.max(0, distance)) + " m";
@@ -188,8 +147,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                             formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
                 else return formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft";
             }
-        } else if (type == MeasureType.AREA) {
-            elevationView.setVisibility(View.GONE);
+        } else {
             double area;
             if (areaOverlay != null) areaOverlay.remove();
             if (trace.size() >= 3) {
@@ -208,58 +166,13 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                     return formatter_two_dec.format(Math.max(0, area / 2589988.110336d)) + " mi²";
                 else return formatter_no_dec.format(Math.max(0, area / 0.09290304d)) + " ft²";
             }
-        } else if (type == MeasureType.ELEVATION) {
-            if (altitude == null) {
-                final Handler h = new Handler();
-                new Thread(() -> {
-                    try {
-                        altitude = Util.updateElevationView(elevationView, trace);
-                        h.post(() -> {
-                            if (isFinishing()) return;
-                            if (altitude == null) {
-                                Dialogs.getElevationErrorDialog(Map.this).show();
-                                changeType(MeasureType.DISTANCE);
-                            } else {
-                                updateValueText();
-                                elevationView.invalidate();
-                            }
-                        });
-                    } catch (IOException e) {
-                        h.post(() -> {
-                            if (isFinishing()) return;
-                            Dialogs.getElevationErrorDialog(Map.this).show();
-                        });
-                    }
-                }).start();
-                return "Loading...";
-            } else {
-                String re = metric ? formatter_two_dec.format(altitude.first) + " m\u2B06, " +
-                        formatter_two_dec.format(altitude.second) + " m\u2B07" :
-                        formatter_two_dec.format(altitude.first / 0.3048f) + " ft\u2B06" +
-                                formatter_two_dec.format(altitude.second / 0.3048f) + " ft\u2B07";
-                if (!trace.isEmpty()) {
-                    try {
-                        float lastPoint = Util.lastElevation;
-                        if (lastPoint > -Float.MAX_VALUE) {
-                            re += "\n" + (metric ? formatter_two_dec.format(lastPoint) + " m" :
-                                    formatter_two_dec.format(lastPoint / 0.3048f) + " ft");
-                        }
-                    } catch (Exception e) {
-                        if (BuildConfig.DEBUG) Logger.log(e);
-                    }
-                }
-                elevationView.setVisibility(trace.size() > 1 ? View.VISIBLE : View.GONE);
-                altitude = null;
-                return re;
-            }
-        } else {
-            return "not yet supported";
         }
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull final Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+        stateRestored = true;
         try {
             metric = savedInstanceState.getBoolean("metric");
             @SuppressWarnings("unchecked")
@@ -267,29 +180,50 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             // "java.lang.ClassCastException: java.util.ArrayList cannot be cast to java.util.Stack"
             // on some devices
             List<LatLng> tmp = (List<LatLng>) savedInstanceState.getSerializable("trace");
-            if (tmp != null) {
-                for (LatLng latLng : tmp) {
-                    addPoint(latLng);
-                }
+            restoredTrace = tmp;
+            if (savedInstanceState.containsKey("position-zoom")) {
+                restoredCamera = CameraPosition.fromLatLngZoom(
+                        new LatLng(savedInstanceState.getDouble("position-lat"),
+                                savedInstanceState.getDouble("position-lon")),
+                        savedInstanceState.getFloat("position-zoom"));
             }
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                    new LatLng(savedInstanceState.getDouble("position-lat"),
-                            savedInstanceState.getDouble("position-lon")),
-                    savedInstanceState.getFloat("position-zoom")));
+            String savedType = savedInstanceState.getString("type");
+            if (savedType != null) changeType(MeasureType.valueOf(savedType));
         } catch (Exception e) {
             if (BuildConfig.DEBUG) Logger.log(e);
+        }
+        // the map is usually not ready yet, onMapReady applies the state then
+        if (mMap != null) applyRestoredState();
+    }
+
+    /**
+     * Draws the trace and moves the camera to where they were before the activity got recreated
+     */
+    private void applyRestoredState() {
+        if (restoredTrace != null) {
+            for (LatLng latLng : restoredTrace) {
+                addPoint(latLng);
+            }
+            restoredTrace = null;
+        }
+        if (restoredCamera != null) {
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(restoredCamera));
+            restoredCamera = null;
         }
     }
 
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
-        outState.putSerializable("trace", trace);
+        // if the map never got ready, the state from last time was not applied yet
+        outState.putSerializable("trace",
+                restoredTrace != null ? new ArrayList<>(restoredTrace) : trace);
         outState.putBoolean("metric", metric);
-        if (mMap != null) { // might be null if there is an issue with Google
-            // Play Services
-            outState.putDouble("position-lon", mMap.getCameraPosition().target.longitude);
-            outState.putDouble("position-lat", mMap.getCameraPosition().target.latitude);
-            outState.putFloat("position-zoom", mMap.getCameraPosition().zoom);
+        outState.putString("type", type.name());
+        CameraPosition camera = mMap != null ? mMap.getCameraPosition() : restoredCamera;
+        if (camera != null) {
+            outState.putDouble("position-lon", camera.target.longitude);
+            outState.putDouble("position-lat", camera.target.latitude);
+            outState.putFloat("position-zoom", camera.zoom);
         }
         super.onSaveInstanceState(outState);
     }
@@ -344,12 +278,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         } catch (final BadParcelableException bpe) {
             if (BuildConfig.DEBUG) Logger.log(bpe);
         }
-        billingClient = BillingClient.newBuilder(this)
-                .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases(PendingPurchasesParams.newBuilder()
-                        .enableOneTimeProducts()
-                        .build())
-                .build();
         init();
     }
 
@@ -359,15 +287,10 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     private void init() {
         setContentView(R.layout.activity_map);
 
-        elevationView = findViewById(R.id.elevationsview);
-
         formatter_no_dec.setMaximumFractionDigits(0);
         formatter_two_dec.setMaximumFractionDigits(2);
 
         final SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
-
-        ELEVATION_API_KEY =
-                prefs.getString("elevation_api_key", getString(R.string.elevation_api_key));
 
         // use metric a the default everywhere, except in the US
         metric = prefs.getBoolean("metric", !Locale.getDefault().equals(Locale.US));
@@ -420,21 +343,8 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
         valueTv = findViewById(R.id.distance);
         updateValueText();
-        valueTv.setOnClickListener(v -> {
-            if (type == MeasureType.DISTANCE) {
-                changeType(MeasureType.AREA);
-            }
-            // only switch to elevation mode is an internet connection is
-            // available and user has access to this feature
-            else if (type == MeasureType.AREA && Util.checkInternetConnection(Map.this) &&
-                    PRO_VERSION) {
-                changeType(MeasureType.ELEVATION);
-            } else {
-                if (BuildConfig.DEBUG) Logger.log("internet connection available: " +
-                        Util.checkInternetConnection(Map.this));
-                changeType(MeasureType.DISTANCE);
-            }
-        });
+        valueTv.setOnClickListener(v -> changeType(
+                type == MeasureType.DISTANCE ? MeasureType.AREA : MeasureType.DISTANCE));
 
         View delete = findViewById(R.id.delete);
         delete.setOnClickListener(v -> removeLast());
@@ -461,10 +371,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         drawerList.setDivider(null);
         drawerList.setOnItemClickListener((parent, view, position, id) -> {
             switch (position) {
-                case 0: // Search before Android 5.0
-                    Dialogs.getSearchDialog(Map.this).show();
-                    closeDrawer();
-                    break;
                 case 2: // Units
                     Dialogs.getUnits(Map.this, distance, SphericalUtil.computeArea(trace))
                             .show();
@@ -476,63 +382,20 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                 case 4: // area
                     changeType(MeasureType.AREA);
                     break;
-                case 5: // elevation
-                    if (PRO_VERSION) {
-                        changeType(MeasureType.ELEVATION);
-                    } else {
-                        if (billingClient.isReady()) {
-                            Dialogs.showElevationAccessDialog(Map.this, () -> {
-                                QueryProductDetailsParams queryProductDetailsParams =
-                                        QueryProductDetailsParams.newBuilder()
-                                                .setProductList(Collections.singletonList(
-                                                        QueryProductDetailsParams.Product.newBuilder()
-                                                                .setProductId(SKU)
-                                                                .setProductType(BillingClient.ProductType.INAPP)
-                                                                .build())).build();
-
-                                billingClient.queryProductDetailsAsync(queryProductDetailsParams, (result, productDetailsResult) -> {
-                                            for (ProductDetails pd : productDetailsResult.getProductDetailsList()) {
-                                                if (pd.getProductId().equals(SKU)) {
-                                                    List<BillingFlowParams.ProductDetailsParams> productDetailsParamsList =
-                                                            Collections.singletonList(
-                                                                    BillingFlowParams.ProductDetailsParams.newBuilder()
-                                                                            .setProductDetails(pd)
-                                                                            .build()
-                                                            );
-
-                                                    BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                                                            .setProductDetailsParamsList(productDetailsParamsList)
-                                                            .build();
-
-                                                    BillingResult launchResult = billingClient.launchBillingFlow(this, billingFlowParams);
-                                                    if (launchResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                                                        Dialogs.getShowErrorDialog(this, getString(R.string.purchase_error, launchResult.getResponseCode())).show();
-                                                    }
-                                                }
-                                            }
-                                        }
-                                );
-
-                            });
-                        } else {
-                            Dialogs.getShowErrorDialog(this, getString(R.string.purchase_start_error)).show();
-                        }
-                    }
-                    break;
-                case 7: // map
+                case 6: // map
                     changeView(GoogleMap.MAP_TYPE_NORMAL);
                     break;
-                case 8: // satellite
+                case 7: // satellite
                     changeView(GoogleMap.MAP_TYPE_HYBRID);
                     break;
-                case 9: // terrain
+                case 8: // terrain
                     changeView(GoogleMap.MAP_TYPE_TERRAIN);
                     break;
-                case 11: // save
+                case 10: // save
                     Dialogs.getSaveNShare(Map.this, trace).show();
                     closeDrawer();
                     break;
-                case 12: // more apps
+                case 11: // more apps
                     try {
                         startActivity(new Intent(Intent.ACTION_VIEW,
                                 Uri.parse("market://search?q=pub:j4velin"))
@@ -543,7 +406,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                     }
                     break;
-                case 13: // about
+                case 12: // about
                     Dialogs.getAbout(Map.this).show();
                     closeDrawer();
                     break;
@@ -570,44 +433,17 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             lp.setMargins(0, statusbar + 10, 0, 0);
             topCenterOverlay.setLayoutParams(lp);
 
-            FrameLayout.LayoutParams elevationParams =
-                    (FrameLayout.LayoutParams) elevationView.getLayoutParams();
             drawerList.setPadding(0, statusbar + 10, 0, 0);
             if (navBarOnRight) {
                 drawerListAdapert.setMarginBottom(0);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
-                elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
             } else {
                 drawerListAdapert.setMarginBottom(navBarHeight);
                 if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
-                elevationParams.setMargins(Math.max(drawerSize, Util.dpToPx(this, 25)), 0, 0,
-                        navBarHeight);
             }
-            elevationView.setLayoutParams(elevationParams);
 
             if (mMap != null) updateMapPadding();
             return windowInsets;
-        });
-
-        PRO_VERSION |= prefs.getBoolean("pro", false);
-
-        billingClient.startConnection(new BillingClientStateListener() {
-            @Override
-            public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
-                billingClient.queryPurchasesAsync(
-                        QueryPurchasesParams.newBuilder()
-                                .setProductType(BillingClient.ProductType.INAPP)
-                                .build(),
-                        purchasesUpdatedListener::onPurchasesUpdated
-                );
-            }
-
-            @Override
-            public void onBillingServiceDisconnected() {
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
-                if (BuildConfig.DEBUG) Logger.log("billing setup failed");
-            }
         });
     }
 
@@ -657,8 +493,11 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
         updateMapPadding();
 
-        // check if open with csv file
-        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+        if (stateRestored) {
+            // recreated, e.g. after a rotation -> continue where the user was
+            applyRestoredState();
+        } else if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+            // opened with a csv file
             try {
                 Util.loadFromFile(getIntent().getData(), this);
             } catch (IOException e) {
@@ -668,7 +507,6 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                         .show();
             }
         } else {
-            // dont move to current position if started with a csv file
             getCurrentLocation(location -> {
                 if (location != null && mMap.getCameraPosition().zoom <= 5) {
                     moveCamera(new LatLng(location.getLatitude(), location.getLongitude()));
@@ -780,10 +618,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     public void onRequestPermissionsResult(int requestCode, @NonNull final String[] permissions,
                                            @NonNull final int[] grantResults) {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.length > 0 &&
-                    grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
-                getCurrentLocation(lastLocationCallback);
-                mMap.setMyLocationEnabled(true);
+            if (hasLocationPermission()) {
+                if (lastLocationCallback != null) getCurrentLocation(lastLocationCallback);
+                if (mMap != null) mMap.setMyLocationEnabled(true);
             } else {
                 String savedLocation = getSharedPreferences("settings", Context.MODE_PRIVATE)
                         .getString("lastLocation", null);
@@ -824,10 +661,14 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * @return true, if the user granted at least approximate location access, which is
+     * enough for the location button and to center the map
+     */
     private boolean hasLocationPermission() {
         return PermissionChecker
                 .checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PermissionChecker.PERMISSION_GRANTED && PermissionChecker
+                PermissionChecker.PERMISSION_GRANTED || PermissionChecker
                 .checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PermissionChecker.PERMISSION_GRANTED;
     }
