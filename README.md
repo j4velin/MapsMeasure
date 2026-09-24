@@ -15,6 +15,32 @@ A simple app to measure distances on Google Maps.
 
 Build
 -----
-[![Build Status](https://travis-ci.org/j4velin/MapsMeasure.svg?branch=master)](https://travis-ci.org/j4velin/MapsMeasure)
 
-To build the app, add the [Google Play Services lib](http://developer.android.com/google/play-services/index.html "Google Play services") to the build path. You need to add a Google Maps API key in the manifest file - [get one here](https://developers.google.com/maps/documentation/android/start#obtain_a_google_maps_api_key "get one here")
+Requirements: the Android SDK with platform 37 (point `sdk.dir` in `local.properties` at it, or set
+`ANDROID_HOME`). Gradle runs on JDK 21 and downloads one itself if none is installed.
+
+    ./gradlew assembleDebug
+
+### API keys
+
+The map and the elevation profile need Google API keys. Without them the app builds and runs, but
+the map stays blank. Create `src/main/res/values/maps_key.xml` (it is gitignored):
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="maps_api_key">YOUR_MAPS_SDK_KEY</string>
+    <string name="elevation_api_key">YOUR_ELEVATION_API_KEY</string>
+</resources>
+```
+
+Get the keys in the [Google Cloud console](https://developers.google.com/maps/documentation/android-sdk/get-api-key)
+and restrict the Maps key to the package name `de.j4velin.mapsmeasure` and the SHA-1 of the
+certificate you sign with.
+
+### Signing
+
+Both build types are signed with the keystore named in `key.properties`. If that file does not
+exist, the build uses `example.keystore.jks` through `key.properties.sample` and also replaces the
+API keys above with placeholders. To use your own keys, copy `key.properties.sample` to
+`key.properties` and fill in your keystore.
