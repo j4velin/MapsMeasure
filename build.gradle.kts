@@ -27,6 +27,8 @@ android {
         applicationId = "de.j4velin.mapsmeasure"
         minSdk = 23
         targetSdk = 37
+        versionCode = 2000
+        versionName = "2.0.0"
         if (!hasOwnKeys) {
             resValue("string", "maps_api_key", "0000")
         }
@@ -70,8 +72,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.drawerlayout)
-    implementation(libs.androidx.fragment)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
@@ -80,6 +82,7 @@ dependencies {
     implementation(libs.play.services.maps)
 
     implementation(platform(libs.compose.bom))
+    implementation(libs.compose.material3)
     implementation(libs.maps.compose)
 
     testImplementation(libs.junit)

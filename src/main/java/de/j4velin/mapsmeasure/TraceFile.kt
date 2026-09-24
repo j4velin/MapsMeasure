@@ -33,9 +33,17 @@ object TraceFile {
     /**
      * Writes the given trace of points to the given file
      */
-    @JvmStatic
     @Throws(IOException::class)
     fun save(file: File, trace: List<LatLng>) = file.bufferedWriter().use { write(it, trace) }
+
+    /**
+     * Writes the given trace of points to the given uri
+     */
+    @Throws(IOException::class)
+    fun save(resolver: ContentResolver, uri: Uri, trace: List<LatLng>) {
+        val stream = resolver.openOutputStream(uri, "wt") ?: throw IOException("Can not open $uri")
+        stream.bufferedWriter().use { write(it, trace) }
+    }
 
     /**
      * Reads the trace stored at the given uri

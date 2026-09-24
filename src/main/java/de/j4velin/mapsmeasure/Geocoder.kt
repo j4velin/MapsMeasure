@@ -35,7 +35,7 @@ suspend fun findAddress(context: Context, locationName: String): Address? =
             @Suppress("DEPRECATION") // the listener variant needs API 33
             Geocoder(context.applicationContext).getFromLocationName(locationName, 1)?.firstOrNull()
         } catch (e: IOException) {
-            if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "geocoder failed", e)
+            if (BuildConfig.DEBUG) Log.d(LOG_TAG, "geocoder failed", e)
             null
         }
     }

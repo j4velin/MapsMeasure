@@ -28,10 +28,7 @@
     <string name="file_saved">Datei gespeichert</string>
     <string name="error">Fehler: %s</string>
     <string name="select_file">Datei wählen</string>
-    <string name="no_files_found">Keine Dateien in %s gefunden</string>
-    <string name="file_name">Dateiname (optional)</string>
-    <string name="file_path">Datei wird hier gespeichert: %s</string>
-    <string name="dir_read_error">Fehler beim Lesen des Ordners %s</string>
+    <string name="old_files">Von älteren Versionen gespeicherte Dateien</string>
     <string name="marker_on_current_location">Markierung wurde am aktuellen Standort gesetzt</string>
 
 </resources>

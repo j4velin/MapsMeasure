@@ -32,9 +32,6 @@
     <string name="file_saved">File saved</string>
     <string name="error">Error: %s</string>
     <string name="select_file">Select file</string>
-    <string name="no_files_found">No files found in %s</string>
-    <string name="file_name">File name (optional)</string>
-    <string name="file_path">File will be saved here: %s</string>
-    <string name="dir_read_error">Error reading directory %s</string>
+    <string name="old_files">Files saved by older versions</string>
     <string name="marker_on_current_location">A marker was added on your current location</string>
 </resources>

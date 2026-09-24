@@ -23,6 +23,7 @@ import android.location.Location
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -47,6 +48,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 import java.util.Locale
 import kotlin.coroutines.resume
@@ -62,6 +64,9 @@ sealed interface MeasureEvent {
     data class Message(@StringRes val text: Int) : MeasureEvent
 
     data class Error(val exception: Exception) : MeasureEvent
+
+    /** a trace was written to a file which can be shared by the given content uri */
+    data class Share(val uri: Uri) : MeasureEvent
 }
 
 /**
@@ -160,10 +165,56 @@ class MeasureViewModel(
                 setTrace(loaded)
                 loaded.firstOrNull()?.let { _events.send(MeasureEvent.MoveCamera(it, 16f)) }
             } catch (e: IOException) {
-                if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "can not load $uri", e)
+                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "can not load $uri", e)
                 _events.send(MeasureEvent.Error(e))
             }
         }
+    }
+
+    /**
+     * Writes the trace to the given file, e.g. one the user created with the system file picker
+     */
+    fun saveTrace(uri: Uri) {
+        val trace = uiState.value.trace
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { TraceFile.save(app.contentResolver, uri, trace) }
+                _events.send(MeasureEvent.Message(R.string.file_saved))
+            } catch (e: IOException) {
+                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "can not save $uri", e)
+                _events.send(MeasureEvent.Error(e))
+            }
+        }
+    }
+
+    /**
+     * Writes the trace to a temporary file and asks the screen to share it
+     */
+    fun shareTrace() {
+        val trace = uiState.value.trace
+        viewModelScope.launch {
+            try {
+                val file = File(app.cacheDir, "MapsMeasure.csv")
+                withContext(Dispatchers.IO) { TraceFile.save(file, trace) }
+                _events.send(MeasureEvent.Share(FileProvider.getUriForFile(app, FILE_PROVIDER, file)))
+            } catch (e: IOException) {
+                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "can not share", e)
+                _events.send(MeasureEvent.Error(e))
+            }
+        }
+    }
+
+    /**
+     * Traces which app versions before 2.0 saved in the app's own folders
+     */
+    fun oldTraceFiles(): List<File> =
+        listOfNotNull(app.getExternalFilesDir(null), app.getDir("traces", Context.MODE_PRIVATE))
+            .flatMap { it.listFiles()?.toList() ?: emptyList() }
+            .filter { it.isFile }
+            .sortedByDescending { it.lastModified() }
+
+    fun deleteOldTrace(file: File) {
+        file.delete()
     }
 
     /**
@@ -173,7 +224,7 @@ class MeasureViewModel(
         viewModelScope.launch {
             val address = findAddress(app, query)
             if (address == null) {
-                if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "no location found")
+                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "no location found")
                 _events.send(MeasureEvent.Message(R.string.no_location_found))
             } else {
                 _events.send(
@@ -214,7 +265,7 @@ class MeasureViewModel(
                 _events.send(MeasureEvent.Message(R.string.marker_on_current_location))
                 addPoint(myLocation)
             } else {
-                if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "location accuracy too bad to add point")
+                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "location accuracy too bad to add point")
                 _events.send(MeasureEvent.MoveCamera(myLocation, 16f))
             }
         }
@@ -254,6 +305,7 @@ class MeasureViewModel(
         private const val KEY_TYPE = "type"
         private const val KEY_CAMERA = "camera"
         private const val KEY_STARTED = "started"
+        private const val FILE_PROVIDER = "de.j4velin.mapsmeasure.fileprovider"
 
         val Factory = viewModelFactory {
             initializer {
