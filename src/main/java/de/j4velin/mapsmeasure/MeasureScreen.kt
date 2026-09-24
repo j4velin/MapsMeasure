@@ -401,7 +401,7 @@ private fun MeasureMap(
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ValueBox(
+internal fun ValueBox(
     value: String,
     onToggleType: () -> Unit,
     onRemoveLast: () -> Unit,
@@ -436,7 +436,7 @@ private fun ValueBox(
 }
 
 @Composable
-private fun DrawerItems(
+internal fun DrawerItems(
     state: MeasureUiState,
     onSearch: (String) -> Unit,
     onUnits: () -> Unit,

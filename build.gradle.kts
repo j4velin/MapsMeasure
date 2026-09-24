@@ -29,6 +29,7 @@ android {
         targetSdk = 37
         versionCode = 2000
         versionName = "2.0.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (!hasOwnKeys) {
             resValue("string", "maps_api_key", "0000")
         }
@@ -86,4 +87,10 @@ dependencies {
     implementation(libs.maps.compose)
 
     testImplementation(libs.junit)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
