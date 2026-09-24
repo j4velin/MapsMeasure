@@ -51,38 +51,6 @@ abstract class Util {
     private final static WeakHashMap<LatLng, Float> CACHE = new WeakHashMap<>();
 
     /**
-     * Returns the height of the status bar
-     * from http://mrtn.me/blog/2012/03/17/get-the-height-of-the-status-bar-in-android/
-     *
-     * @param c the Context
-     * @return the height of the status bar
-     */
-    static int getStatusBarHeight(final Context c) {
-        int result = 0;
-        int resourceId = c.getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = c.getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    /**
-     * Returns the height of the navigation bar
-     *
-     * @param c the Context
-     * @return the height of the navigation bar
-     */
-    static int getNavigationBarHeight(final Context c) {
-        int result = 0;
-        int resourceId =
-                c.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = c.getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    /**
      * Converts the given lenght in dp into pixels
      *
      * @param c  the Context

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- layout-w600dp-land has no drawer_layout and no menu button: the drawer is always visible there -->
 <androidx.drawerlayout.widget.DrawerLayout
     android:id="@+id/drawer_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:ignore="InconsistentLayout">
 
     <!-- The main content view -->
 
@@ -49,8 +52,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|left"
             android:layout_marginBottom="10dp"
-            android:contentDescription="menu"
-            android:src="@drawable/ic_menu"/>
+            android:contentDescription="@string/menu"
+            android:src="@drawable/ic_menu"
+            tools:ignore="InconsistentLayout"/>
 
         <de.j4velin.mapsmeasure.ElevationView
             android:id="@+id/elevationsview"

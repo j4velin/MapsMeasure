@@ -16,7 +16,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/file_name" >
+        android:hint="@string/file_name"
+        android:importantForAutofill="no"
+        android:inputType="text" >
 
         <requestFocus />
     </EditText>

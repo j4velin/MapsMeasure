@@ -34,19 +34,19 @@ android {
         release {
             signingConfig = signingConfigs.release
             minifyEnabled = true
-            shrinkResources = false
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-project.txt'
         }
         debug {
             signingConfig = signingConfigs.release
             minifyEnabled = false
-            shrinkResources = false
             debuggable = true
         }
     }
 }
 
 dependencies {
+    implementation 'androidx.core:core:1.19.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.gms:play-services-location:21.4.0'
     implementation 'com.google.android.gms:play-services-maps:20.0.0'

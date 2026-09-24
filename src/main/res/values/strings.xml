@@ -17,7 +17,13 @@
     <string name="app_version">App version: %s</string>
     <string name="moreapps">More apps</string>
     <string name="delete">delete</string>
-    <string name="delete_all">Delete all %d points?</string>
+    <plurals name="delete_all">
+        <item quantity="one">Delete %d point?</item>
+        <item quantity="other">Delete all %d points?</item>
+    </plurals>
+    <string name="menu">Menu</string>
+    <string name="units_distance">%1$s m\n%2$s km\n\n%3$s ft\n%4$s yd\n%5$s mi\n%6$s nautical miles</string>
+    <string name="units_area" translatable="false">%1$s m²\n%2$s ha\n%3$s km²\n\n%4$s ft²\n%5$s ac (U.S. Survey)\n%6$s mi²</string>
     <string name="no_location_found">No location found</string>
     <string name="units">Units</string>
     <string name="savenshare">Save &amp; share</string>

@@ -26,10 +26,8 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.BadParcelableException;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.View;
@@ -40,7 +38,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.PermissionChecker;
+import androidx.core.graphics.Insets;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
@@ -78,8 +79,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
-
-import de.j4velin.mapsmeasure.wrapper.API17Wrapper;
 
 public class Map extends FragmentActivity implements OnMapReadyCallback {
 
@@ -338,14 +337,8 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         updateValueText();
     }
 
-    @SuppressLint("NewApi")
     @Override
     public void onCreate(final Bundle savedInstanceState) {
-        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= 23 && PermissionChecker
-                .checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                PermissionChecker.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
-        }
         try {
             super.onCreate(savedInstanceState);
         } catch (final BadParcelableException bpe) {
@@ -447,7 +440,8 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         delete.setOnClickListener(v -> removeLast());
         delete.setOnLongClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(Map.this);
-            builder.setMessage(getString(R.string.delete_all, trace.size()));
+            builder.setMessage(getResources()
+                    .getQuantityString(R.plurals.delete_all, trace.size(), trace.size()));
             builder.setPositiveButton(android.R.string.yes,
                     (dialog, which) -> {
                         clear();
@@ -560,48 +554,40 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
 
         changeType(MeasureType.DISTANCE);
 
-        // KitKat translucent decor enabled? -> Add some margin/padding to the drawer
-        statusbar = Util.getStatusBarHeight(this);
-
-        FrameLayout.LayoutParams lp =
-                (FrameLayout.LayoutParams) topCenterOverlay.getLayoutParams();
-        lp.setMargins(0, statusbar + 10, 0, 0);
-        topCenterOverlay.setLayoutParams(lp);
-
-        // on most devices and in most orientations, the navigation bar
-        // should be at the bottom and therefore reduces the available
-        // display height
-        navBarHeight = Util.getNavigationBarHeight(this);
-
-        DisplayMetrics total, available;
-        total = new DisplayMetrics();
-        available = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(available);
-        API17Wrapper.getRealMetrics(getWindowManager().getDefaultDisplay(), total);
-
-        navBarOnRight = getResources().getConfiguration().orientation ==
-                android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
-                (total.widthPixels - available.widthPixels > 0);
-
-        FrameLayout.LayoutParams elevationParams =
-                (FrameLayout.LayoutParams) elevationView.getLayoutParams();
-
         drawerSize = mDrawerLayout == null ? Util.dpToPx(this, 200) : 0;
 
-        if (navBarOnRight) {
+        // the window is drawn behind the translucent system bars -> move the overlays out of their way
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            statusbar = bars.top;
             // in landscape on phones, the navigation bar might be at the
             // right side, reducing the available display width
+            navBarOnRight = bars.right > 0;
+            navBarHeight = navBarOnRight ? bars.right : bars.bottom;
+
+            FrameLayout.LayoutParams lp =
+                    (FrameLayout.LayoutParams) topCenterOverlay.getLayoutParams();
+            lp.setMargins(0, statusbar + 10, 0, 0);
+            topCenterOverlay.setLayoutParams(lp);
+
+            FrameLayout.LayoutParams elevationParams =
+                    (FrameLayout.LayoutParams) elevationView.getLayoutParams();
             drawerList.setPadding(0, statusbar + 10, 0, 0);
-            if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
-            elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
-        } else {
-            drawerList.setPadding(0, statusbar + 10, 0, 0);
-            drawerListAdapert.setMarginBottom(navBarHeight);
-            if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
-            elevationParams.setMargins(Math.max(drawerSize, Util.dpToPx(this, 25)), 0, 0,
-                    navBarHeight);
-        }
-        elevationView.setLayoutParams(elevationParams);
+            if (navBarOnRight) {
+                drawerListAdapert.setMarginBottom(0);
+                if (menuButton != null) menuButton.setPadding(0, 0, 0, 0);
+                elevationParams.setMargins(drawerSize, 0, navBarHeight, 0);
+            } else {
+                drawerListAdapert.setMarginBottom(navBarHeight);
+                if (menuButton != null) menuButton.setPadding(0, 0, 0, navBarHeight);
+                elevationParams.setMargins(Math.max(drawerSize, Util.dpToPx(this, 25)), 0, 0,
+                        navBarHeight);
+            }
+            elevationView.setLayoutParams(elevationParams);
+
+            if (mMap != null) updateMapPadding();
+            return windowInsets;
+        });
 
         PRO_VERSION |= prefs.getBoolean("pro", false);
 
@@ -669,14 +655,7 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
             mMap.setMyLocationEnabled(true);
         }
 
-        // KitKat translucent decor enabled? -> Add some margin/padding to the map
-        if (navBarOnRight) {
-            // in landscape on phones, the navigation bar might be at the
-            // right side, reducing the available display width
-            mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
-        } else {
-            mMap.setPadding(0, statusbar, 0, navBarHeight);
-        }
+        updateMapPadding();
 
         // check if open with csv file
         if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
@@ -699,6 +678,19 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
     }
 
     /**
+     * Keeps the map controls out from under the system bars
+     */
+    private void updateMapPadding() {
+        if (navBarOnRight) {
+            // in landscape on phones, the navigation bar might be at the
+            // right side, reducing the available display width
+            mMap.setPadding(drawerSize, statusbar, navBarHeight, 0);
+        } else {
+            mMap.setPadding(0, statusbar, 0, navBarHeight);
+        }
+    }
+
+    /**
      * Tries to get the users current position
      *
      * @param callback the callback which should be called when we got a location
@@ -708,11 +700,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         if (hasLocationPermission()) {
             LocationServices.getFusedLocationProviderClient(this).getLastLocation().addOnSuccessListener(callback::gotLocation);
         } else { // no permission
-            if (Build.VERSION.SDK_INT >= 23) {
-                lastLocationCallback = callback;
-                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
-            } else if (BuildConfig.DEBUG) Logger.log("no permission and no way to request them");
+            lastLocationCallback = callback;
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         }
     }
 

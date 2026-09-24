@@ -25,6 +25,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
@@ -36,16 +37,16 @@ import java.util.List;
  */
 public class GeocoderTask extends AsyncTask<String, Void, Address> {
 
-    private final Map map;
+    private final WeakReference<Map> mapRef;
+    private final Geocoder geocoder;
 
     public GeocoderTask(final Map m) {
-        map = m;
+        mapRef = new WeakReference<>(m);
+        geocoder = new Geocoder(m.getApplicationContext());
     }
 
     @Override
     protected Address doInBackground(final String... locationName) {
-        // Creating an instance of Geocoder class
-        Geocoder geocoder = new Geocoder(map.getBaseContext());
         try {
             // Get only the best result that matches the input text
             List<Address> addresses = geocoder.getFromLocationName(locationName[0], 1);
@@ -59,6 +60,8 @@ public class GeocoderTask extends AsyncTask<String, Void, Address> {
 
     @Override
     protected void onPostExecute(final Address address) {
+        Map map = mapRef.get();
+        if (map == null || map.isFinishing()) return;
         if (address == null) {
             if (BuildConfig.DEBUG) Logger.log("no location found");
             Toast.makeText(map.getBaseContext(), R.string.no_location_found, Toast.LENGTH_SHORT).show();

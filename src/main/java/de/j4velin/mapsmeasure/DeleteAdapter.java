@@ -39,8 +39,8 @@ class DeleteAdapter extends BaseAdapter {
 	private final OnClickListener deleteListener = new OnClickListener() {
 		@Override
 		public void onClick(final View v) {
-            int file = (Integer) v.getTag();
-            files.remove(file).delete();
+			int file = (Integer) v.getTag();
+			files.remove(file).delete();
 			notifyDataSetChanged();
 		}
 	};
@@ -87,7 +87,7 @@ class DeleteAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, final ViewGroup parent) {
 		ViewHolder holder;
 		if (convertView == null) {
-			convertView = mInflater.inflate(R.layout.deletelistitem, null);
+			convertView = mInflater.inflate(R.layout.deletelistitem, parent, false);
 			holder = new ViewHolder();
 			holder.iv = convertView.findViewById(R.id.icon);
 			holder.tv = (TextView) convertView.findViewById(R.id.text);

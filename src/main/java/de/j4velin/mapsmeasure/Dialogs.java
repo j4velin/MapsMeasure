@@ -222,21 +222,21 @@ abstract class Dialogs {
                     .putBoolean("metric", isChecked).apply();
             m.updateValueText();
         });
-        ((TextView) d.findViewById(R.id.distance)).setText(
-                Map.formatter_two_dec.format(Math.max(0, distance)) + " m\n" +
-                        Map.formatter_two_dec.format(distance / 1000) + " km\n\n" +
-                        Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)) + " ft\n" +
-                        Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)) + " yd\n" +
-                        Map.formatter_two_dec.format(distance / 1609.344f) + " mi\n" +
-                        Map.formatter_two_dec.format(distance / 1852f) + " nautical miles");
+        ((TextView) d.findViewById(R.id.distance)).setText(m.getString(R.string.units_distance,
+                Map.formatter_two_dec.format(Math.max(0, distance)),
+                Map.formatter_two_dec.format(distance / 1000),
+                Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)),
+                Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)),
+                Map.formatter_two_dec.format(distance / 1609.344f),
+                Map.formatter_two_dec.format(distance / 1852f)));
 
-        ((TextView) d.findViewById(R.id.area)).setText(
-                Map.formatter_two_dec.format(Math.max(0, area)) + " m²\n" +
-                        Map.formatter_two_dec.format(area / 10000) + " ha\n" +
-                        Map.formatter_two_dec.format(area / 1000000) + " km²\n\n" +
-                        Map.formatter_two_dec.format(Math.max(0, area / 0.09290304d)) + " ft²\n" +
-                        Map.formatter_two_dec.format(area / 4046.8726099d) + " ac (U.S. Survey)\n" +
-                        Map.formatter_two_dec.format(area / 2589988.110336d) + " mi²");
+        ((TextView) d.findViewById(R.id.area)).setText(m.getString(R.string.units_area,
+                Map.formatter_two_dec.format(Math.max(0, area)),
+                Map.formatter_two_dec.format(area / 10000),
+                Map.formatter_two_dec.format(area / 1000000),
+                Map.formatter_two_dec.format(Math.max(0, area / 0.09290304d)),
+                Map.formatter_two_dec.format(area / 4046.8726099d),
+                Map.formatter_two_dec.format(area / 2589988.110336d)));
         d.findViewById(R.id.close).setOnClickListener(v -> d.dismiss());
         return d;
     }

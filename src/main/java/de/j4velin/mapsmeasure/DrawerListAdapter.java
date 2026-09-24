@@ -18,7 +18,6 @@ package de.j4velin.mapsmeasure;
 
 import android.content.Context;
 import android.location.Geocoder;
-import android.os.Build;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -99,50 +98,35 @@ public class DrawerListAdapter extends BaseAdapter {
         int type = getItemViewType(position);
         if (type == ID_EDITTEXT) {
             if (Geocoder.isPresent()) {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                    ViewHolder holder;
-                    if (convertView == null) {
-                        holder = new ViewHolder();
-                        convertView = mInflater.inflate(R.layout.listitem_item, null);
-                        holder.view = (TextView) convertView.findViewById(R.id.item);
-                        convertView.setTag(holder);
-                    } else {
-                        holder = (ViewHolder) convertView.getTag();
-                    }
-                    holder.view.setText(android.R.string.search_go);
-                    holder.view
-                            .setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_search, 0, 0, 0);
-                } else {
-                    convertView = mInflater.inflate(R.layout.listitem_edittext, null);
-                    ((EditText) convertView.findViewById(R.id.search))
-                            .setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                                @Override
-                                public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
-                                    if (event == null ||
-                                            event.getAction() == KeyEvent.ACTION_DOWN) {
-                                        new GeocoderTask(map).execute(v.getText().toString());
-                                        View view = map.getCurrentFocus();
-                                        if (view != null) {
-                                            InputMethodManager inputManager = (InputMethodManager) map.getSystemService(
-                                                    Context.INPUT_METHOD_SERVICE);
-                                            inputManager.hideSoftInputFromWindow(view.getWindowToken(),
-                                                    InputMethodManager.HIDE_NOT_ALWAYS);
-                                        }
-                                        map.closeDrawer();
+                convertView = mInflater.inflate(R.layout.listitem_edittext, parent, false);
+                ((EditText) convertView.findViewById(R.id.search))
+                        .setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                            @Override
+                            public boolean onEditorAction(final TextView v, int actionId, final KeyEvent event) {
+                                if (event == null ||
+                                        event.getAction() == KeyEvent.ACTION_DOWN) {
+                                    new GeocoderTask(map).execute(v.getText().toString());
+                                    View view = map.getCurrentFocus();
+                                    if (view != null) {
+                                        InputMethodManager inputManager = (InputMethodManager) map.getSystemService(
+                                                Context.INPUT_METHOD_SERVICE);
+                                        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                                                InputMethodManager.HIDE_NOT_ALWAYS);
                                     }
-                                    return true;
+                                    map.closeDrawer();
                                 }
-                            });
-                }
+                                return true;
+                            }
+                        });
             } else {
                 if (BuildConfig.DEBUG) Logger.log("Geocoder not present");
-                convertView = mInflater.inflate(R.layout.listitem_empty, null);
+                convertView = mInflater.inflate(R.layout.listitem_empty, parent, false);
             }
         } else if (type == ID_EMPTY) {
             ViewHolder holder;
             if (convertView == null) {
                 holder = new ViewHolder();
-                convertView = mInflater.inflate(R.layout.listitem_empty, null);
+                convertView = mInflater.inflate(R.layout.listitem_empty, parent, false);
                 holder.view = (TextView) convertView.findViewById(R.id.empty);
                 convertView.setTag(holder);
             } else {
@@ -155,15 +139,15 @@ public class DrawerListAdapter extends BaseAdapter {
                 holder = new ViewHolder();
                 switch (type) {
                     case ID_DIVIDER:
-                        convertView = mInflater.inflate(R.layout.listitem_separator, null);
+                        convertView = mInflater.inflate(R.layout.listitem_separator, parent, false);
                         holder.view = (TextView) convertView.findViewById(R.id.separator);
                         break;
                     case ID_ITEM:
-                        convertView = mInflater.inflate(R.layout.listitem_item, null);
+                        convertView = mInflater.inflate(R.layout.listitem_item, parent, false);
                         holder.view = (TextView) convertView.findViewById(R.id.item);
                         break;
                     case ID_SMALL_ITEM:
-                        convertView = mInflater.inflate(R.layout.listitem_small_item, null);
+                        convertView = mInflater.inflate(R.layout.listitem_small_item, parent, false);
                         holder.view = (TextView) convertView.findViewById(R.id.smallitem);
                         break;
                 }

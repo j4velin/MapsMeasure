@@ -8,6 +8,7 @@
           android:hint="@android:string/search_go"
           android:imeActionLabel="@android:string/search_go"
           android:imeOptions="actionSearch"
+          android:importantForAutofill="no"
           android:inputType="text"
           android:selectAllOnFocus="true"
           android:textAppearance="?android:textAppearanceMedium"

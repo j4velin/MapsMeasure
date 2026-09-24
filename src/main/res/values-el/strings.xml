@@ -17,7 +17,12 @@
     <string name="app_version">Έκδοση: %s</string>
     <string name="moreapps">Άλλες εφαρμογές</string>
     <string name="delete">Διαγραφή</string>
-    <string name="delete_all">Διαγραφή και των %d σημείων;</string>
+    <plurals name="delete_all">
+        <item quantity="one">Διαγραφή του %d σημείου;</item>
+        <item quantity="other">Διαγραφή και των %d σημείων;</item>
+    </plurals>
+    <string name="menu">Μενού</string>
+    <string name="units_distance">%1$s m\n%2$s km\n\n%3$s ft\n%4$s yd\n%5$s mi\n%6$s ναυτικά μίλια</string>
     <string name="no_location_found">Δε βρέθηκε τοποθεσία</string>
     <string name="units">Μονάδες</string>
     <string name="savenshare">Αποθήκευση &amp; κοινοποίηση</string>

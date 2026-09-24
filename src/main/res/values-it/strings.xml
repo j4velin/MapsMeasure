@@ -13,7 +13,13 @@
     <string name="about_text">Questa app è stata creata da Thomas Hoffmann (<a href="http://www.j4velin-development.de">www.j4velin-development.de</a>) e usa le \'Google Maps API v2\'.\n\nMaps Measure è open source! Prendi il codice da <a href="https://github.com/j4velin/MapsMeasure">GitHub</a>.\n\n</string>
     <string name="app_version">Versione app: %s</string>
     <string name="moreapps">Altre app</string>
-    <string name="delete_all">Cancella tutti e %d i punti?</string>
+    <plurals name="delete_all">
+        <item quantity="one">Cancella %d punto?</item>
+        <item quantity="other">Cancella tutti e %d i punti?</item>
+        <item quantity="many">Cancella tutti e %d i punti?</item>
+    </plurals>
+    <string name="menu">Menu</string>
+    <string name="units_distance">%1$s m\n%2$s km\n\n%3$s ft\n%4$s yd\n%5$s mi\n%6$s miglia nautiche</string>
     <string name="no_location_found">Luogo non trovato</string>
     <string name="units">Unità di misura</string>
     <string name="savenshare">Salva &amp; condividi</string>

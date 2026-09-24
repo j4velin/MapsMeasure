@@ -15,7 +15,13 @@
     <string name="app_version">Version de l\'appli : %s</string>
     <string name="moreapps">Plus d\'Applis</string>
     <string name="delete">effacer</string>
-    <string name="delete_all">Effacer les %d points?</string>
+    <plurals name="delete_all">
+        <item quantity="one">Effacer le %d point?</item>
+        <item quantity="other">Effacer les %d points?</item>
+        <item quantity="many">Effacer les %d de points?</item>
+    </plurals>
+    <string name="menu">Menu</string>
+    <string name="units_distance">%1$s m\n%2$s km\n\n%3$s ft\n%4$s yd\n%5$s mi\n%6$s milles nautiques</string>
     <string name="no_location_found">Aucun emplacement trouvé</string>
     <string name="units">Unités</string>
     <string name="savenshare">Sauv. &amp; partager</string>

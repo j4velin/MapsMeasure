@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context="de.j4velin.mapsmeasure.Map">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:tools="http://schemas.android.com/tools"
+       tools:context="de.j4velin.mapsmeasure.Map"
+       tools:parentTag="android.widget.FrameLayout">
 
     <fragment
         android:id="@+id/map"
@@ -47,4 +46,4 @@
         android:background="@drawable/value_background"
         android:padding="5dp"/>
 
-</FrameLayout>
+</merge>
