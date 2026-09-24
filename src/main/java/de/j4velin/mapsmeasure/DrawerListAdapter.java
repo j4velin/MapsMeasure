@@ -186,7 +186,7 @@ public class DrawerListAdapter extends BaseAdapter {
         public TextView view;
     }
 
-    public void changeType(final Map.MeasureType newType) {
+    public void changeType(final MeasureType newType) {
         switch (newType) {
             case DISTANCE:
                 selected_type = 3;

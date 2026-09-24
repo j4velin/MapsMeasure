@@ -40,6 +40,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.List;
 
 abstract class Dialogs {
@@ -152,30 +153,16 @@ abstract class Dialogs {
                                 c.getDir("traces", Context.MODE_PRIVATE).getAbsolutePath()),
                         Toast.LENGTH_SHORT).show();
             } else if (files.length == 1) {
-                try {
-                    ((Map) c).loadTrace(Uri.fromFile(files[0]));
-                    d.dismiss();
-                } catch (IOException e) {
-                    if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "save & share failed", e);
-                    Toast.makeText(c, c.getString(R.string.error,
-                                    e.getClass().getSimpleName() + "\n" + e.getMessage()),
-                            Toast.LENGTH_LONG).show();
-                }
+                ((Map) c).loadTrace(Uri.fromFile(files[0]));
+                d.dismiss();
             } else {
                 d.dismiss();
                 AlertDialog.Builder b = new AlertDialog.Builder(c);
                 b.setTitle(R.string.select_file);
                 final DeleteAdapter da = new DeleteAdapter(files, (Map) c);
                 b.setAdapter(da, (dialog, which) -> {
-                    try {
-                        ((Map) c).loadTrace(Uri.fromFile(da.getFile(which)));
-                        dialog.dismiss();
-                    } catch (IOException e) {
-                        if (BuildConfig.DEBUG) Log.d(Map.LOG_TAG, "save & share failed", e);
-                        Toast.makeText(c, c.getString(R.string.error,
-                                        e.getClass().getSimpleName() + "\n" + e.getMessage()),
-                                Toast.LENGTH_LONG).show();
-                    }
+                    ((Map) c).loadTrace(Uri.fromFile(da.getFile(which)));
+                    dialog.dismiss();
                 });
                 b.create().show();
             }
@@ -204,37 +191,34 @@ abstract class Dialogs {
 
     /**
      * @param m        the Map
+     * @param metric   true, if metric units are selected
      * @param distance the current distance
      * @param area     the current area
      * @return the units dialog
      */
-    public static Dialog getUnits(final Map m, float distance, double area) {
+    public static Dialog getUnits(final Map m, boolean metric, double distance, double area) {
+        final NumberFormat format = Units.twoDecimals();
         final Dialog d = new Dialog(m);
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         d.setContentView(R.layout.dialog_unit);
         CheckBox metricCb = d.findViewById(R.id.metric);
-        metricCb.setChecked(Map.metric);
-        metricCb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            Map.metric = !Map.metric;
-            m.getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
-                    .putBoolean("metric", isChecked).apply();
-            m.updateValueText();
-        });
+        metricCb.setChecked(metric);
+        metricCb.setOnCheckedChangeListener((buttonView, isChecked) -> m.setMetric(isChecked));
         ((TextView) d.findViewById(R.id.distance)).setText(m.getString(R.string.units_distance,
-                Map.formatter_two_dec.format(Math.max(0, distance)),
-                Map.formatter_two_dec.format(distance / 1000),
-                Map.formatter_two_dec.format(Math.max(0, distance / 0.3048f)),
-                Map.formatter_two_dec.format(Math.max(0, distance / 0.9144)),
-                Map.formatter_two_dec.format(distance / 1609.344f),
-                Map.formatter_two_dec.format(distance / 1852f)));
+                format.format(Math.max(0, distance)),
+                format.format(distance / 1000),
+                format.format(Math.max(0, distance / 0.3048f)),
+                format.format(Math.max(0, distance / 0.9144)),
+                format.format(distance / 1609.344f),
+                format.format(distance / 1852f)));
 
         ((TextView) d.findViewById(R.id.area)).setText(m.getString(R.string.units_area,
-                Map.formatter_two_dec.format(Math.max(0, area)),
-                Map.formatter_two_dec.format(area / 10000),
-                Map.formatter_two_dec.format(area / 1000000),
-                Map.formatter_two_dec.format(Math.max(0, area / 0.09290304d)),
-                Map.formatter_two_dec.format(area / 4046.8726099d),
-                Map.formatter_two_dec.format(area / 2589988.110336d)));
+                format.format(Math.max(0, area)),
+                format.format(area / 10000),
+                format.format(area / 1000000),
+                format.format(Math.max(0, area / 0.09290304d)),
+                format.format(area / 4046.8726099d),
+                format.format(area / 2589988.110336d)));
         d.findViewById(R.id.close).setOnClickListener(v -> d.dismiss());
         return d;
     }

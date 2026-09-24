@@ -73,6 +73,8 @@ dependencies {
     implementation(libs.androidx.drawerlayout)
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
