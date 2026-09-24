@@ -49,6 +49,7 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
@@ -352,7 +353,9 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
         }
         billingClient = BillingClient.newBuilder(this)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder()
+                        .enableOneTimeProducts()
+                        .build())
                 .build();
         init();
     }
@@ -493,8 +496,8 @@ public class Map extends FragmentActivity implements OnMapReadyCallback {
                                                                 .setProductType(BillingClient.ProductType.INAPP)
                                                                 .build())).build();
 
-                                billingClient.queryProductDetailsAsync(queryProductDetailsParams, (result, list) -> {
-                                            for (ProductDetails pd : list) {
+                                billingClient.queryProductDetailsAsync(queryProductDetailsParams, (result, productDetailsResult) -> {
+                                            for (ProductDetails pd : productDetailsResult.getProductDetailsList()) {
                                                 if (pd.getProductId().equals(SKU)) {
                                                     List<BillingFlowParams.ProductDetailsParams> productDetailsParamsList =
                                                             Collections.singletonList(

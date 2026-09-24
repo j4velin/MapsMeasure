@@ -210,7 +210,7 @@ public class PolyUtil {
                     for (double x3 : xTry) {
                         double dy = y2 - y1;
                         double len2 = x2 * x2 + dy * dy;
-                        double t = len2 <= 0 ? 0 : clamp((x3 * x2 + (y3 - y1) * dy) / len2, 0, 1);
+                        double t = len2 <= 0 ? 0 : MathUtil.clamp((x3 * x2 + (y3 - y1) * dy) / len2, 0, 1);
                         double xClosest = t * x2;
                         double yClosest = y1 + t * dy;
                         double latClosest = inverseMercator(yClosest);
