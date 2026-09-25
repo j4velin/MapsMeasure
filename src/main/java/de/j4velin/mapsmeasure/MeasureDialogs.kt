@@ -41,7 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -221,10 +221,10 @@ private fun displayName(file: File): String {
 
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val linkColor = MaterialTheme.colorScheme.primary
-    val text = remember(linkColor) {
-        val about = context.resources.getText(R.string.about_text)
+    val text = remember(resources, linkColor) {
+        val about = resources.getText(R.string.about_text)
         buildAnnotatedString {
             append(about.toString())
             if (about is Spanned) {
@@ -240,7 +240,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                     )
                 }
             }
-            append(context.getString(R.string.app_version, BuildConfig.VERSION_NAME))
+            append(resources.getString(R.string.app_version, BuildConfig.VERSION_NAME))
         }
     }
     AlertDialog(
