@@ -34,4 +34,13 @@ class MeasureUiStateTest {
         assertEquals("6,182 m²", state.copy(type = MeasureType.AREA).formattedValue(Locale.US))
         assertEquals("0 m²", MeasureUiState(type = MeasureType.AREA).formattedValue(Locale.US))
     }
+
+    @Test
+    fun mapLayerIsReadFromTheStoredMapType() {
+        // the values the settings stored before there was an enum: normal 1, hybrid 4, terrain 3
+        assertEquals(MapLayer.MAP, MapLayer.fromGoogleMapType(1))
+        assertEquals(MapLayer.SATELLITE, MapLayer.fromGoogleMapType(4))
+        assertEquals(MapLayer.TERRAIN, MapLayer.fromGoogleMapType(3))
+        assertEquals(MapLayer.MAP, MapLayer.fromGoogleMapType(42))
+    }
 }

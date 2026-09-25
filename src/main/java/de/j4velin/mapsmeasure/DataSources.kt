@@ -44,8 +44,7 @@ interface Settings {
     /** true for metric units, false for imperial ones */
     var metric: Boolean
 
-    /** one of GoogleMap.MAP_TYPE_NORMAL, MAP_TYPE_HYBRID or MAP_TYPE_TERRAIN */
-    var mapType: Int
+    var mapLayer: MapLayer
 
     /** where the map was when it last stopped moving, or null if it was never shown */
     var lastCamera: CameraPosition?
@@ -102,9 +101,9 @@ class PreferenceSettings(context: Context) : Settings {
         get() = prefs.getBoolean("metric", Locale.getDefault() != Locale.US)
         set(value) = prefs.edit { putBoolean("metric", value) }
 
-    override var mapType: Int
-        get() = prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL)
-        set(value) = prefs.edit { putInt("mapView", value) }
+    override var mapLayer: MapLayer
+        get() = MapLayer.fromGoogleMapType(prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL))
+        set(value) = prefs.edit { putInt("mapView", value.googleMapType) }
 
     // stored as "latitude#longitude#zoom"
     override var lastCamera: CameraPosition?
@@ -131,7 +130,12 @@ class PlayServicesLocator(context: Context) : Locator {
         val location = try {
             // the last location is null e.g. right after a reboot, so ask for a new one then
             client.lastLocation.await() ?: CancellationTokenSource().let {
-                client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, it.token).await(it)
+                // stops the request if the coroutine is cancelled, does nothing once it completed
+                try {
+                    client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, it.token).await()
+                } finally {
+                    it.cancel()
+                }
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e

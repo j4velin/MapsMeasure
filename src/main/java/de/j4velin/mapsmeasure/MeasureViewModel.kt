@@ -75,7 +75,7 @@ class MeasureViewModel(
                 ?.let { name -> MeasureType.entries.firstOrNull { it.name == name } }
                 ?: MeasureType.DISTANCE,
             metric = settings.metric,
-            mapType = settings.mapType,
+            mapLayer = settings.mapLayer,
         )
     )
     val uiState: StateFlow<MeasureUiState> = _uiState.asStateFlow()
@@ -132,12 +132,9 @@ class MeasureViewModel(
         _uiState.update { it.copy(metric = metric) }
     }
 
-    /**
-     * @param mapType one of GoogleMap.MAP_TYPE_NORMAL, MAP_TYPE_HYBRID or MAP_TYPE_TERRAIN
-     */
-    fun setMapType(mapType: Int) {
-        settings.mapType = mapType
-        _uiState.update { it.copy(mapType = mapType) }
+    fun setMapLayer(mapLayer: MapLayer) {
+        settings.mapLayer = mapLayer
+        _uiState.update { it.copy(mapLayer = mapLayer) }
     }
 
     fun onCameraIdle(position: CameraPosition) {

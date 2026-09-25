@@ -18,7 +18,6 @@ package de.j4velin.mapsmeasure
 
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +42,7 @@ class MeasureViewModelTest {
 
     private class FakeSettings : Settings {
         override var metric = true
-        override var mapType = GoogleMap.MAP_TYPE_NORMAL
+        override var mapLayer = MapLayer.MAP
         override var lastCamera: CameraPosition? = null
     }
 
@@ -89,16 +88,16 @@ class MeasureViewModelTest {
     @Test
     fun settingsAreReadAndStored() {
         settings.metric = false
-        settings.mapType = GoogleMap.MAP_TYPE_HYBRID
+        settings.mapLayer = MapLayer.SATELLITE
         val vm = viewModel()
         assertEquals(false, vm.uiState.value.metric)
-        assertEquals(GoogleMap.MAP_TYPE_HYBRID, vm.uiState.value.mapType)
+        assertEquals(MapLayer.SATELLITE, vm.uiState.value.mapLayer)
 
         vm.setMetric(true)
-        vm.setMapType(GoogleMap.MAP_TYPE_TERRAIN)
+        vm.setMapLayer(MapLayer.TERRAIN)
         assertEquals(true, settings.metric)
-        assertEquals(GoogleMap.MAP_TYPE_TERRAIN, settings.mapType)
-        assertEquals(GoogleMap.MAP_TYPE_TERRAIN, vm.uiState.value.mapType)
+        assertEquals(MapLayer.TERRAIN, settings.mapLayer)
+        assertEquals(MapLayer.TERRAIN, vm.uiState.value.mapLayer)
     }
 
     @Test

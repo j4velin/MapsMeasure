@@ -16,6 +16,7 @@
 
 package de.j4velin.mapsmeasure
 
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import java.util.Locale
@@ -25,18 +26,33 @@ enum class MeasureType {
 }
 
 /**
+ * The map views the user can choose from
+ *
+ * @param googleMapType the matching GoogleMap.MAP_TYPE_ constant, which the settings store
+ */
+enum class MapLayer(val googleMapType: Int) {
+    MAP(GoogleMap.MAP_TYPE_NORMAL),
+    SATELLITE(GoogleMap.MAP_TYPE_HYBRID),
+    TERRAIN(GoogleMap.MAP_TYPE_TERRAIN);
+
+    companion object {
+        fun fromGoogleMapType(type: Int) = entries.firstOrNull { it.googleMapType == type } ?: MAP
+    }
+}
+
+/**
  * Everything the measure screen shows
  *
- * @param trace   the points the user added, in order
- * @param type    whether the distance along the trace or the area inside it is measured
- * @param metric  true to show metric units, false for imperial ones
- * @param mapType one of GoogleMap.MAP_TYPE_NORMAL, MAP_TYPE_HYBRID or MAP_TYPE_TERRAIN
+ * @param trace    the points the user added, in order
+ * @param type     whether the distance along the trace or the area inside it is measured
+ * @param metric   true to show metric units, false for imperial ones
+ * @param mapLayer the map view the user chose
  */
 data class MeasureUiState(
     val trace: List<LatLng> = emptyList(),
     val type: MeasureType = MeasureType.DISTANCE,
     val metric: Boolean = true,
-    val mapType: Int = 1, // GoogleMap.MAP_TYPE_NORMAL
+    val mapLayer: MapLayer = MapLayer.MAP,
 ) {
     /** the length of the trace in meters */
     val distance: Double

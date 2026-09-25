@@ -19,7 +19,6 @@ import androidx.core.content.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -141,7 +140,7 @@ class MeasureUiTest {
                     onSearch = {},
                     onUnits = {},
                     onType = { viewModel.setType(it) },
-                    onMapType = { viewModel.setMapType(it) },
+                    onMapLayer = { viewModel.setMapLayer(it) },
                     onSave = {},
                     onMoreApps = {},
                     onAbout = {},
@@ -157,9 +156,9 @@ class MeasureUiTest {
         composeRule.onNodeWithText(string(R.string.mapview_map)).assertIsSelected()
         composeRule.onNodeWithText(string(R.string.mapview_satellite)).performClick()
         composeRule.onNodeWithText(string(R.string.mapview_satellite)).assertIsSelected()
-        assertEquals(GoogleMap.MAP_TYPE_HYBRID, viewModel.uiState.value.mapType)
+        assertEquals(MapLayer.SATELLITE, viewModel.uiState.value.mapLayer)
         // the map type is a setting, so it is remembered
-        assertEquals(GoogleMap.MAP_TYPE_HYBRID, viewModel(SavedStateHandle()).uiState.value.mapType)
+        assertEquals(MapLayer.SATELLITE, viewModel(SavedStateHandle()).uiState.value.mapLayer)
     }
 
     @Test
