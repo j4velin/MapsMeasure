@@ -32,6 +32,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -92,6 +93,7 @@ import com.google.android.gms.maps.GoogleMap as GoogleMapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -106,6 +108,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 private val LineColor = Color(0x80000000)
+private val LineColorDark = Color(0x80FFFFFF)
 private val AreaColor = Color(0x80FF0000)
 private val DrawerWidth = 260.dp
 
@@ -353,6 +356,7 @@ private fun MeasureMap(
     onAddPoint: (LatLng) -> Unit,
     onMyLocationButton: () -> Unit,
 ) {
+    val dark = isSystemInDarkTheme()
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
@@ -361,6 +365,8 @@ private fun MeasureMap(
             mapType = MapType.entries.firstOrNull { it.value == state.mapType } ?: MapType.NORMAL,
         ),
         uiSettings = MapUiSettings(myLocationButtonEnabled = true),
+        // the dark map style only applies to the normal and terrain map
+        mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM,
         // keeps the map controls out from under the system bars
         contentPadding = WindowInsets.systemBars.asPaddingValues(),
         onMapLoaded = onMapLoaded,
@@ -387,7 +393,7 @@ private fun MeasureMap(
             }
         }
         if (state.trace.size >= 2) {
-            Polyline(points = state.trace, color = LineColor, width = 5f)
+            Polyline(points = state.trace, color = if (dark) LineColorDark else LineColor, width = 5f)
         }
         if (state.type == MeasureType.AREA && state.trace.size >= 3) {
             Polygon(points = state.trace, fillColor = AreaColor, strokeWidth = 0f)
