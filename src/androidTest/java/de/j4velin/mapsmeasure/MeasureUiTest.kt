@@ -48,10 +48,13 @@ class MeasureUiTest {
 
     private fun string(id: Int) = app.getString(id)
 
+    private fun viewModel(savedState: SavedStateHandle) =
+        MeasureViewModel(savedState, PreferenceSettings(app), PlayServicesLocator(app), FileTraceStorage(app))
+
     @Before
     fun setUp() {
         clearSettings()
-        viewModel = MeasureViewModel(app, SavedStateHandle())
+        viewModel = viewModel(SavedStateHandle())
         viewModel.setMetric(true)
     }
 
@@ -156,7 +159,7 @@ class MeasureUiTest {
         composeRule.onNodeWithText(string(R.string.mapview_satellite)).assertIsSelected()
         assertEquals(GoogleMap.MAP_TYPE_HYBRID, viewModel.uiState.value.mapType)
         // the map type is a setting, so it is remembered
-        assertEquals(GoogleMap.MAP_TYPE_HYBRID, MeasureViewModel(app, SavedStateHandle()).uiState.value.mapType)
+        assertEquals(GoogleMap.MAP_TYPE_HYBRID, viewModel(SavedStateHandle()).uiState.value.mapType)
     }
 
     @Test
@@ -180,7 +183,7 @@ class MeasureUiTest {
         composeRule.onNodeWithText(string(R.string.metric)).performClick()
         assertTrue(viewModel.uiState.value.metric)
         // the setting is remembered
-        assertTrue(MeasureViewModel(app, SavedStateHandle()).uiState.value.metric)
+        assertTrue(viewModel(SavedStateHandle()).uiState.value.metric)
     }
 
     @Test
@@ -212,14 +215,14 @@ class MeasureUiTest {
     @Test
     fun stateSurvivesRecreation() {
         val savedState = SavedStateHandle()
-        MeasureViewModel(app, savedState).apply {
+        viewModel(savedState).apply {
             points.forEach { addPoint(it) }
             setType(MeasureType.AREA)
             assertTrue(consumeFirstStart())
         }
 
         // what the system hands a new view model after a rotation or process death
-        val restored = MeasureViewModel(app, SavedStateHandle(savedState.keys().associateWith { savedState.get<Any>(it) }))
+        val restored = viewModel(SavedStateHandle(savedState.keys().associateWith { savedState.get<Any>(it) }))
         assertEquals(points, restored.uiState.value.trace)
         assertEquals(MeasureType.AREA, restored.uiState.value.type)
         assertFalse(restored.consumeFirstStart())

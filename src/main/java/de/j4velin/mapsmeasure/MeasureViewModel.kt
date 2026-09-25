@@ -16,15 +16,9 @@
 
 package de.j4velin.mapsmeasure
 
-import android.annotation.SuppressLint
-import android.app.Application
-import android.content.Context
-import android.location.Location
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.StringRes
-import androidx.core.content.FileProvider
-import androidx.core.content.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -32,12 +26,9 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,12 +37,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
-import java.util.Locale
-import kotlin.coroutines.resume
 import kotlin.math.max
 
 /**
@@ -72,14 +59,14 @@ sealed interface MeasureEvent {
 /**
  * Holds the trace and settings of the measure screen. The trace, the measure type and the camera
  * are kept in the SavedStateHandle, so they survive rotation and process death; the units and the
- * map type are settings and stored in the SharedPreferences.
+ * map type are settings and stored in the [Settings].
  */
 class MeasureViewModel(
-    private val app: Application,
     private val savedState: SavedStateHandle,
+    private val settings: Settings,
+    private val locator: Locator,
+    private val storage: TraceStorage,
 ) : ViewModel() {
-
-    private val prefs = app.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(
         MeasureUiState(
@@ -87,12 +74,14 @@ class MeasureViewModel(
             type = savedState.get<String>(KEY_TYPE)
                 ?.let { name -> MeasureType.entries.firstOrNull { it.name == name } }
                 ?: MeasureType.DISTANCE,
-            // use metric a the default everywhere, except in the US
-            metric = prefs.getBoolean("metric", Locale.getDefault() != Locale.US),
-            mapType = prefs.getInt("mapView", GoogleMap.MAP_TYPE_NORMAL),
+            metric = settings.metric,
+            mapType = settings.mapType,
         )
     )
     val uiState: StateFlow<MeasureUiState> = _uiState.asStateFlow()
+
+    // read before the map reports its first position, which overwrites the stored one
+    private val previousCamera = settings.lastCamera
 
     private val _events = Channel<MeasureEvent>(Channel.BUFFERED)
     val events: Flow<MeasureEvent> = _events.receiveAsFlow()
@@ -139,7 +128,7 @@ class MeasureViewModel(
     )
 
     fun setMetric(metric: Boolean) {
-        prefs.edit { putBoolean("metric", metric) }
+        settings.metric = metric
         _uiState.update { it.copy(metric = metric) }
     }
 
@@ -147,12 +136,14 @@ class MeasureViewModel(
      * @param mapType one of GoogleMap.MAP_TYPE_NORMAL, MAP_TYPE_HYBRID or MAP_TYPE_TERRAIN
      */
     fun setMapType(mapType: Int) {
-        prefs.edit { putInt("mapView", mapType) }
+        settings.mapType = mapType
         _uiState.update { it.copy(mapType = mapType) }
     }
 
     fun onCameraIdle(position: CameraPosition) {
         camera = position
+        // stored right away, as the process might be killed without any further callback
+        settings.lastCamera = position
     }
 
     /**
@@ -161,7 +152,7 @@ class MeasureViewModel(
     fun loadTrace(uri: Uri) {
         viewModelScope.launch {
             try {
-                val loaded = withContext(Dispatchers.IO) { TraceFile.load(app.contentResolver, uri) }
+                val loaded = storage.load(uri)
                 setTrace(loaded)
                 loaded.firstOrNull()?.let { _events.send(MeasureEvent.MoveCamera(it, 16f)) }
             } catch (e: IOException) {
@@ -178,7 +169,7 @@ class MeasureViewModel(
         val trace = uiState.value.trace
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) { TraceFile.save(app.contentResolver, uri, trace) }
+                storage.save(uri, trace)
                 _events.send(MeasureEvent.Message(R.string.file_saved))
             } catch (e: IOException) {
                 if (BuildConfig.DEBUG) Log.d(LOG_TAG, "can not save $uri", e)
@@ -194,9 +185,7 @@ class MeasureViewModel(
         val trace = uiState.value.trace
         viewModelScope.launch {
             try {
-                val file = File(app.cacheDir, "MapsMeasure.csv")
-                withContext(Dispatchers.IO) { TraceFile.save(file, trace) }
-                _events.send(MeasureEvent.Share(FileProvider.getUriForFile(app, FILE_PROVIDER, file)))
+                _events.send(MeasureEvent.Share(storage.saveForSharing(trace)))
             } catch (e: IOException) {
                 if (BuildConfig.DEBUG) Log.d(LOG_TAG, "can not share", e)
                 _events.send(MeasureEvent.Error(e))
@@ -207,14 +196,10 @@ class MeasureViewModel(
     /**
      * Traces which app versions before 2.0 saved in the app's own folders
      */
-    fun oldTraceFiles(): List<File> =
-        listOfNotNull(app.getExternalFilesDir(null), app.getDir("traces", Context.MODE_PRIVATE))
-            .flatMap { it.listFiles()?.toList() ?: emptyList() }
-            .filter { it.isFile }
-            .sortedByDescending { it.lastModified() }
+    suspend fun oldTraceFiles(): List<File> = storage.oldFiles()
 
     fun deleteOldTrace(file: File) {
-        file.delete()
+        viewModelScope.launch { storage.delete(file) }
     }
 
     /**
@@ -222,31 +207,28 @@ class MeasureViewModel(
      */
     fun search(query: String) {
         viewModelScope.launch {
-            val address = findAddress(app, query)
-            if (address == null) {
+            val place = locator.findPlace(query)
+            if (place == null) {
                 if (BuildConfig.DEBUG) Log.d(LOG_TAG, "no location found")
                 _events.send(MeasureEvent.Message(R.string.no_location_found))
             } else {
-                _events.send(
-                    MeasureEvent.MoveCamera(
-                        LatLng(address.latitude, address.longitude),
-                        max(10f, camera?.zoom ?: 0f),
-                        animate = true
-                    )
-                )
+                _events.send(MeasureEvent.MoveCamera(place, max(10f, camera?.zoom ?: 0f), animate = true))
             }
         }
     }
 
     /**
-     * Moves the map to the current location, unless the user already zoomed in somewhere.
+     * Moves the map to the current location, unless the user already zoomed in somewhere. If the
+     * location is not known, the map moves to where it was last time instead.
      * Needs the location permission.
      */
     fun centerOnCurrentLocation() {
         viewModelScope.launch {
-            val location = lastLocation() ?: return@launch
-            if ((camera?.zoom ?: 0f) <= 5) {
-                _events.send(MeasureEvent.MoveCamera(LatLng(location.latitude, location.longitude), 16f))
+            val location = locator.currentLocation()
+            if (location == null) {
+                moveToLastPosition()
+            } else if ((camera?.zoom ?: 0f) <= 5) {
+                _events.send(MeasureEvent.MoveCamera(location, 16f))
             }
         }
     }
@@ -257,47 +239,29 @@ class MeasureViewModel(
      */
     fun onMyLocationButton() {
         viewModelScope.launch {
-            val location = lastLocation() ?: return@launch
-            val myLocation = LatLng(location.latitude, location.longitude)
+            val location = locator.currentLocation()
+            if (location == null) {
+                _events.send(MeasureEvent.Message(R.string.no_location_found))
+                return@launch
+            }
             val target = camera?.target
             // Only if the distance is less than 50cm we are on our location, add the marker
-            if (target != null && SphericalUtil.computeDistanceBetween(myLocation, target) < 0.5) {
+            if (target != null && SphericalUtil.computeDistanceBetween(location, target) < 0.5) {
                 _events.send(MeasureEvent.Message(R.string.marker_on_current_location))
-                addPoint(myLocation)
+                addPoint(location)
             } else {
-                if (BuildConfig.DEBUG) Log.d(LOG_TAG, "location accuracy too bad to add point")
-                _events.send(MeasureEvent.MoveCamera(myLocation, 16f))
+                _events.send(MeasureEvent.MoveCamera(location, 16f))
             }
         }
     }
 
     /**
-     * Moves the map to where it was when the app was closed last time. Used when the user does
+     * Moves the map to where it was when the app was used last time. Used when the user does
      * not grant the location permission.
      */
     fun moveToLastPosition() {
-        val data = prefs.getString("lastLocation", null)?.split("#") ?: return
-        if (data.size != 3) return
-        val lat = data[0].toDoubleOrNull() ?: return
-        val lng = data[1].toDoubleOrNull() ?: return
-        val zoom = data[2].toFloatOrNull() ?: return
-        _events.trySend(MeasureEvent.MoveCamera(LatLng(lat, lng), zoom))
-    }
-
-    override fun onCleared() {
-        camera?.let {
-            prefs.edit { putString("lastLocation", "${it.target.latitude}#${it.target.longitude}#${it.zoom}") }
-        }
-    }
-
-    /**
-     * @return the last known location or null, if there is none
-     */
-    @SuppressLint("MissingPermission")
-    private suspend fun lastLocation(): Location? = suspendCancellableCoroutine { continuation ->
-        LocationServices.getFusedLocationProviderClient(app).lastLocation
-            .addOnSuccessListener { continuation.resume(it) }
-            .addOnFailureListener { continuation.resume(null) }
+        val last = previousCamera ?: return
+        _events.trySend(MeasureEvent.MoveCamera(last.target, last.zoom))
     }
 
     companion object {
@@ -305,11 +269,16 @@ class MeasureViewModel(
         private const val KEY_TYPE = "type"
         private const val KEY_CAMERA = "camera"
         private const val KEY_STARTED = "started"
-        private const val FILE_PROVIDER = "de.j4velin.mapsmeasure.fileprovider"
 
         val Factory = viewModelFactory {
             initializer {
-                MeasureViewModel(checkNotNull(this[APPLICATION_KEY]), createSavedStateHandle())
+                val app = checkNotNull(this[APPLICATION_KEY])
+                MeasureViewModel(
+                    createSavedStateHandle(),
+                    PreferenceSettings(app),
+                    PlayServicesLocator(app),
+                    FileTraceStorage(app),
+                )
             }
         }
     }
