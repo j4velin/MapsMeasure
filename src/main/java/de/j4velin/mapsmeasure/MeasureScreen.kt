@@ -33,6 +33,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +44,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -88,6 +90,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap as GoogleMapView
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -251,7 +254,6 @@ fun MeasureScreen(viewModel: MeasureViewModel, openedFile: Uri?) {
                 hasLocationPermission = hasLocationPermission,
                 onMapLoaded = { mapLoaded = true },
                 onAddPoint = { viewModel.addPoint(it) },
-                onMyLocationButton = { withLocationPermission { viewModel.onMyLocationButton() } },
             )
             ValueBox(
                 value = state.formattedValue(),
@@ -263,8 +265,33 @@ fun MeasureScreen(viewModel: MeasureViewModel, openedFile: Uri?) {
                     .statusBarsPadding()
                     .padding(top = 10.dp),
             )
+            // the buttons of the map itself are always light, so the map shows none and these follow the theme
+            MapButton(
+                icon = R.drawable.ic_my_location,
+                description = R.string.my_location,
+                onClick = { withLocationPermission { viewModel.onMyLocationButton() } },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .systemBarsPadding()
+                    .padding(top = 10.dp, end = 10.dp),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .systemBarsPadding()
+                    .padding(end = 10.dp, bottom = 44.dp),
+            ) {
+                val zoom: (CameraUpdate) -> Unit = { update ->
+                    if (mapLoaded) scope.launch { cameraPositionState.animate(update) }
+                }
+                MapButton(R.drawable.ic_zoom_in, R.string.zoom_in, { zoom(CameraUpdateFactory.zoomIn()) })
+                MapButton(R.drawable.ic_zoom_out, R.string.zoom_out, { zoom(CameraUpdateFactory.zoomOut()) })
+            }
             if (!permanentDrawer) {
-                MenuButton(
+                MapButton(
+                    icon = R.drawable.ic_menu,
+                    description = R.string.menu,
                     onClick = { scope.launch { drawerState.open() } },
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -352,7 +379,6 @@ private fun MeasureMap(
     hasLocationPermission: Boolean,
     onMapLoaded: () -> Unit,
     onAddPoint: (LatLng) -> Unit,
-    onMyLocationButton: () -> Unit,
 ) {
     val dark = isSystemInDarkTheme()
     GoogleMap(
@@ -362,17 +388,13 @@ private fun MeasureMap(
             isMyLocationEnabled = hasLocationPermission,
             mapType = MapType.entries.firstOrNull { it.value == state.mapType } ?: MapType.NORMAL,
         ),
-        uiSettings = MapUiSettings(myLocationButtonEnabled = true),
+        uiSettings = MapUiSettings(myLocationButtonEnabled = false, zoomControlsEnabled = false),
         // the dark map style only applies to the normal and terrain map
         mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM,
         // keeps the map controls out from under the system bars
         contentPadding = WindowInsets.systemBars.asPaddingValues(),
         onMapLoaded = onMapLoaded,
         onMapClick = onAddPoint,
-        onMyLocationButtonClick = {
-            onMyLocationButton()
-            true
-        },
     ) {
         val icon = remember { BitmapDescriptorFactory.fromResource(R.drawable.marker) }
         state.trace.forEachIndexed { index, point ->
@@ -440,10 +462,15 @@ internal fun ValueBox(
 }
 
 /**
- * Opens the drawer if it is not shown permanently. Looks like the [ValueBox].
+ * A button on top of the map, e.g. to open the drawer or to zoom. Looks like the [ValueBox].
  */
 @Composable
-private fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun MapButton(
+    @DrawableRes icon: Int,
+    @StringRes description: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         onClick = onClick,
         modifier = modifier,
@@ -452,8 +479,8 @@ private fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_menu),
-            contentDescription = stringResource(R.string.menu),
+            painter = painterResource(icon),
+            contentDescription = stringResource(description),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(10.dp),
         )

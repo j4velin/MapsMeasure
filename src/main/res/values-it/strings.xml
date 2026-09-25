@@ -18,6 +18,9 @@
         <item quantity="many">Cancella tutti e %d i punti?</item>
     </plurals>
     <string name="menu">Menu</string>
+    <string name="my_location">La mia posizione</string>
+    <string name="zoom_in">Ingrandisci</string>
+    <string name="zoom_out">Riduci</string>
     <string name="units_distance">%1$s m\n%2$s km\n\n%3$s ft\n%4$s yd\n%5$s mi\n%6$s miglia nautiche</string>
     <string name="no_location_found">Luogo non trovato</string>
     <string name="units">Unità di misura</string>

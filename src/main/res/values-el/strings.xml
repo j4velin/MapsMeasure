@@ -21,6 +21,9 @@
         <item quantity="other">Διαγραφή και των %d σημείων;</item>
     </plurals>
     <string name="menu">Μενού</string>
+    <string name="my_location">Η τοποθεσία μου</string>
+    <string name="zoom_in">Μεγέθυνση</string>
+    <string name="zoom_out">Σμίκρυνση</string>
     <string name="units_distance">%1$s m\n%2$s km\n\n%3$s ft\n%4$s yd\n%5$s mi\n%6$s ναυτικά μίλια</string>
     <string name="no_location_found">Δε βρέθηκε τοποθεσία</string>
     <string name="units">Μονάδες</string>
