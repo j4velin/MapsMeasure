@@ -264,15 +264,13 @@ fun MeasureScreen(viewModel: MeasureViewModel, openedFile: Uri?) {
                     .padding(top = 10.dp),
             )
             if (!permanentDrawer) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_menu),
-                    contentDescription = stringResource(R.string.menu),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                MenuButton(
+                    onClick = { scope.launch { drawerState.open() } },
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .navigationBarsPadding()
-                        .padding(bottom = 10.dp)
-                        .clickable { scope.launch { drawerState.open() } },
+                        // above the Google logo, which the map places in the bottom left corner
+                        .padding(start = 10.dp, bottom = 44.dp),
                 )
             }
         }
@@ -438,6 +436,27 @@ internal fun ValueBox(
                     .padding(end = 10.dp),
             )
         }
+    }
+}
+
+/**
+ * Opens the drawer if it is not shown permanently. Looks like the [ValueBox].
+ */
+@Composable
+private fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_menu),
+            contentDescription = stringResource(R.string.menu),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(10.dp),
+        )
     }
 }
 
