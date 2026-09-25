@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          android:installLocation="auto"
-          android:versionCode="1600"
-          android:versionName="1.6.0">
+          android:installLocation="auto">
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -28,15 +26,10 @@
             android:value="@string/maps_api_key"/>
 
         <activity
-            android:name="de.j4velin.mapsmeasure.Map"
-            android:theme="@style/fullscreen"
+            android:name=".MainActivity"
             android:exported="true"
-            android:windowSoftInputMode="stateHidden">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+            android:theme="@style/fullscreen"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
 
@@ -52,6 +45,18 @@
                 <data android:mimeType="text/csv"/>
             </intent-filter>
         </activity>
+
+        <!-- the launcher entry keeps the old activity name, so existing home screen shortcuts still work -->
+        <activity-alias
+            android:name=".Map"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"

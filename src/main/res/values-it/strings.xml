@@ -28,8 +28,6 @@
     <string name="file_saved">File salvato</string>
     <string name="error">Errore: %s</string>
     <string name="select_file">Seleziona file</string>
-    <string name="no_files_found">Nessun file trovato in %s</string>
-    <string name="file_name">Nome del file (facoltativo)</string>
-    <string name="file_path">Il file verrà salvato qui: %s</string>
+    <string name="old_files">File delle versioni precedenti</string>
 
 </resources>

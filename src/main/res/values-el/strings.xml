@@ -31,9 +31,6 @@
     <string name="file_saved">Το αρχείο αποθηκεύτηκε</string>
     <string name="error">Σφάλμα: %s</string>
     <string name="select_file">Επιλέξτε αρχείο</string>
-    <string name="no_files_found">Δε βρέθηκαν αρχεία στο %s</string>
-    <string name="file_name">Όνομα αρχείου (προαιρετικό)</string>
-    <string name="file_path">Το αρχείο θα αποθηκευτεί εδώ: %s</string>
-    <string name="dir_read_error">Σφάλμα ανάγνωσης φακέλου %s</string>
+    <string name="old_files">Αρχεία από παλαιότερες εκδόσεις</string>
     <string name="marker_on_current_location">Ένας δείκτης προστέθηκε στην τρέχουσα τοποθεσία σας</string>
 </resources>

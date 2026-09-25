@@ -21,6 +21,32 @@ Requirements: the Android SDK with platform 37 (point `sdk.dir` in `local.proper
 
     ./gradlew assembleDebug
 
+Checks and tests:
+
+    ./gradlew lintDebug              # lint, should report no issues
+    ./gradlew testDebugUnitTest      # unit tests: distance, area, CSV, formatting
+    ./gradlew connectedDebugAndroidTest  # Compose UI tests, needs a device or emulator
+
+The UI tests cover the value box, the drawer and the dialogs, but not the map itself. Check the
+map on a device before a release.
+
+### Code
+
+The app is written in Kotlin with Jetpack Compose and consists of one screen:
+
+- `MainActivity` hosts `MeasureScreen`, which shows the map (maps-compose), the measured value and
+  the drawer, and the dialogs in `MeasureDialogs`
+- `MeasureViewModel` holds the `MeasureUiState` (trace, distance or area, units, map type). The
+  trace survives rotation and process death through its `SavedStateHandle`; the units and map
+  type are stored in the `SharedPreferences`
+- `SphericalUtil` computes distances and areas, `Units` formats them and `TraceFile` reads and
+  writes traces as CSV, one `latitude,longitude` line per point (`;` is accepted as separator,
+  too)
+
+Versions are kept in `gradle/libs.versions.toml`. Kotlin comes from AGP's built-in Kotlin support,
+so the Compose compiler plugin has to match the Kotlin version AGP bundles, and maps-compose is
+pinned to 8.3.1, as later versions are built with a newer Kotlin than AGP 9.4 can read.
+
 ### API key
 
 The map needs a Google Maps API key. Without it the app builds and runs, but the map stays blank.

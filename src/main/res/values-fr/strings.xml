@@ -30,9 +30,6 @@
     <string name="file_saved">Fichier enregistré</string>
     <string name="error">Erreur : %s</string>
     <string name="select_file">Sélection d\'un fichier</string>
-    <string name="no_files_found">Aucun fichier trouvé dans %s</string>
-    <string name="file_name">Nom du Fichier (optionnel)</string>
-    <string name="file_path">Le fichier sera sauvegardé ici : %s</string>
-    <string name="dir_read_error">Erreur de lecture du répertoire %s</string>
+    <string name="old_files">Fichiers des anciennes versions</string>
     <string name="marker_on_current_location">Un marqueur a été ajouté sur votre position actuelle</string>
 </resources>

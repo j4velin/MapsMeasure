@@ -1,0 +1,96 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+}
+
+val hasOwnKeys = project.file("key.properties").exists()
+
+val keyProperties = Properties().apply {
+    if (!hasOwnKeys) logger.warn("Using sample keystore!!")
+    project.file(if (hasOwnKeys) "key.properties" else "key.properties.sample")
+        .inputStream().use { load(it) }
+}
+
+android {
+    namespace = "de.j4velin.mapsmeasure"
+    compileSdk = 37
+
+    buildFeatures {
+        buildConfig = true
+        resValues = true
+        compose = true
+    }
+
+    defaultConfig {
+        applicationId = "de.j4velin.mapsmeasure"
+        minSdk = 23
+        targetSdk = 37
+        versionCode = 2000
+        versionName = "2.0.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        if (!hasOwnKeys) {
+            resValue("string", "maps_api_key", "0000")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = project.file(keyProperties.getProperty("keyStore"))
+            storePassword = keyProperties.getProperty("keyStorePassword")
+            keyAlias = keyProperties.getProperty("keyAlias")
+            keyPassword = keyProperties.getProperty("keyAliasPassword")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-project.txt"
+            )
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
+    }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
+
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.material3)
+    implementation(libs.maps.compose)
+
+    testImplementation(libs.junit)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    debugImplementation(libs.compose.ui.test.manifest)
+}
