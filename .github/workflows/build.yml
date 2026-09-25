@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # the Gradle daemon needs Java 21, see gradle/gradle-daemon-jvm.properties
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      # without key.properties the build uses the sample keystore and a dummy Maps API key
+      - name: Unit tests, lint and build
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: build/reports/
