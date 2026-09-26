@@ -27,7 +27,7 @@ android {
         applicationId = "de.j4velin.mapsmeasure"
         minSdk = 23
         targetSdk = 37
-        versionCode = 2000
+        versionCode = 2001
         versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (!hasOwnKeys) {
