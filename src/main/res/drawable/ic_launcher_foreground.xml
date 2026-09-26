@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- scales the globe to about 71dp, so it nearly fills the 72dp visible circle of the 108dp adaptive icon -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+       android:drawable="@drawable/ic_launcher_globe"
+       android:inset="17%"/>
