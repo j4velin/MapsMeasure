@@ -19,7 +19,6 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="Maps Measure"
-        android:largeHeap="true"
         android:supportsRtl="false">
         <meta-data
             android:name="com.google.android.geo.API_KEY"

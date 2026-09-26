@@ -17,6 +17,7 @@
         <item quantity="one">%d Punkt löschen?</item>
         <item quantity="other">Alle %d Punkte löschen?</item>
     </plurals>
+    <string name="delete">löschen</string>
     <string name="menu">Menü</string>
     <string name="my_location">Mein Standort</string>
     <string name="zoom_in">Vergrößern</string>
